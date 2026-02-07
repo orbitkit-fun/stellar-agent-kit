@@ -20,14 +20,30 @@ import { z } from "zod";
 import { Contract, Address, Keypair, TransactionBuilder, Networks, nativeToScVal, xdr, StrKey, } from "@stellar/stellar-sdk";
 import { rpc } from "@stellar/stellar-sdk";
 import { getNetworkConfig } from "../config/networks.js";
-export const AssetSchema = z.object({
+import { NativeAmmClient } from "./nativeAmmClient.js";
+const ContractIdSchema = z.object({
     contractId: z.string().regex(/^C[A-Z2-7]{55}$/, "Invalid Soroban contract ID (C...)"),
 });
+const ClassicAssetSchema = z.object({
+    code: z.string().min(1),
+    issuer: z.string().min(56),
+});
+export const AssetSchema = z.union([ContractIdSchema, ClassicAssetSchema]);
+/** Convert Asset to API string: contract ID or "CODE:ISSUER". */
+function assetToApiString(asset) {
+    if ("contractId" in asset && asset.contractId)
+        return asset.contractId;
+    return `${asset.code}:${asset.issuer}`;
+}
+function hasContractId(asset) {
+    return "contractId" in asset && !!asset.contractId;
+}
 export const QuoteResponseSchema = z.object({
     expectedIn: z.string(),
     expectedOut: z.string(),
     minOut: z.string(),
     route: z.array(z.string()),
+    rawData: z.unknown().optional(),
 });
 // ---------------------------------------------------------------------------
 // SoroSwap contract IDs (research)
@@ -36,9 +52,15 @@ const SOROSWAP_AGGREGATOR_TESTNET = "CCJUD55AG6W5HAI5LRVNKAE5WDP5XGZBUDS5WNTIVDU
 const SOROSWAP_AGGREGATOR_MAINNET = "CAG5LRYQ5JVEUI5TEID72EYOVX44TTUJT5BQR2J6J77FH65PCCFAJDDH";
 /** Valid G address for simulation source (previous "system" account had invalid checksum). */
 const SIMULATION_SOURCE_FALLBACK = "GBZOFW7UOPKDWHMFZT4IMUDNAHIM4KMABHTOKEJYFFYCOXLARMMSBLBE";
-/** Known testnet token contract IDs for quick tests (SoroSwap docs). */
+/** Testnet: XLM (wrapped contract ID); AUSDC = classic testnet USDC with liquidity on SoroSwap. */
 export const TESTNET_ASSETS = {
     XLM: "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+    /** Classic testnet USDC (has liquidity). Use for testnet swaps. */
+    AUSDC: {
+        code: "AUSDC",
+        issuer: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+    },
+    /** Legacy testnet USDC contract (often no path); prefer AUSDC. */
     USDC: "CBBHRKEP5M3NUDRISGLJKGHDHX3DA2CN2AZBQY6WLVUJ7VNLGSKBDUCM",
 };
 // ---------------------------------------------------------------------------
@@ -52,12 +74,14 @@ export class SoroSwapClient {
     sorobanServer;
     networkConfig;
     apiKey;
+    nativeAmmClient;
     constructor(networkConfig, apiKey) {
         this.networkConfig = networkConfig;
         this.sorobanServer = new rpc.Server(networkConfig.sorobanRpcUrl, {
             allowHttp: networkConfig.sorobanRpcUrl.startsWith("http:"),
         });
         this.apiKey = apiKey ?? process.env.SOROSWAP_API_KEY;
+        this.nativeAmmClient = new NativeAmmClient(networkConfig);
     }
     /**
      * Get a swap quote: expected in/out, minOut, route.
@@ -80,18 +104,34 @@ export class SoroSwapClient {
         }
         if (this.apiKey) {
             try {
-                return await this.getQuoteViaApi(fromParsed.data.contractId, toParsed.data.contractId, amountStr);
+                return await this.getQuoteViaApi(assetToApiString(fromParsed.data), assetToApiString(toParsed.data), amountStr);
             }
             catch (apiErr) {
                 const msg = apiErr instanceof Error ? apiErr.message : String(apiErr);
                 const isTestnet = this.networkConfig.horizonUrl.includes("testnet");
-                if (isTestnet && (msg.includes("invalid checksum") || msg.includes("invalid encoded"))) {
-                    return this.getQuoteViaContract(fromParsed.data, toParsed.data, amountStr, sourceAddress);
+                // Try native AMM as fallback for testnet
+                if (isTestnet && (msg.includes("Invalid Stellar address") || msg.includes("No path found") || msg.includes("No liquidity path found"))) {
+                    try {
+                        return await this.nativeAmmClient.getQuote(assetToApiString(fromParsed.data), assetToApiString(toParsed.data), amountStr);
+                    }
+                    catch (nativeErr) {
+                        // If native AMM also fails, throw a helpful combined message
+                        throw new Error(`No liquidity available via SoroSwap or Stellar AMM for this pair on testnet. Try different assets or amounts.`);
+                    }
+                }
+                if (isTestnet &&
+                    hasContractId(fromParsed.data) &&
+                    hasContractId(toParsed.data) &&
+                    (msg.includes("invalid checksum") || msg.includes("invalid encoded"))) {
+                    return this.getQuoteViaContract({ contractId: fromParsed.data.contractId }, { contractId: toParsed.data.contractId }, amountStr, sourceAddress);
                 }
                 throw apiErr;
             }
         }
-        return this.getQuoteViaContract(fromParsed.data, toParsed.data, amountStr, sourceAddress);
+        if (!hasContractId(fromParsed.data) || !hasContractId(toParsed.data)) {
+            throw new Error("Classic assets (e.g. AUSDC) require SOROSWAP_API_KEY for quotes. Set it for testnet XLM/AUSDC swaps.");
+        }
+        return this.getQuoteViaContract({ contractId: fromParsed.data.contractId }, { contractId: toParsed.data.contractId }, amountStr, sourceAddress);
     }
     async getQuoteViaApi(assetIn, assetOut, amount) {
         const network = this.networkConfig.horizonUrl.includes("testnet") ? "testnet" : "mainnet";
@@ -127,7 +167,8 @@ export class SoroSwapClient {
             throw new Error(message);
         }
         const data = (await res.json());
-        return parseApiQuoteToQuoteResponse(data);
+        const parsedQuote = parseApiQuoteToQuoteResponse(data);
+        return parsedQuote;
     }
     /**
      * Fallback: simulate aggregator contract call via Soroban RPC.
@@ -136,6 +177,9 @@ export class SoroSwapClient {
      * Uses sourceAddress for getAccount when valid; otherwise a valid fallback (previous literal had invalid checksum).
      */
     async getQuoteViaContract(fromAsset, toAsset, amount, sourceAddress) {
+        if (!fromAsset.contractId || !toAsset.contractId) {
+            throw new Error("Contract path requires contract IDs. Classic assets (AUSDC) need SOROSWAP_API_KEY.");
+        }
         if (!StrKey.isValidContract(fromAsset.contractId)) {
             throw new Error(`Invalid token contract ID (from): checksum or format error. Got: ${fromAsset.contractId.slice(0, 12)}...`);
         }
@@ -159,6 +203,9 @@ export class SoroSwapClient {
         const networkPassphrase = this.networkConfig.horizonUrl.includes("testnet")
             ? Networks.TESTNET
             : Networks.PUBLIC;
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/3d1882c5-dc48-494c-98b8-3a0080ef9d74', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'soroSwapClient.ts:getQuoteViaContract', message: 'sourceAddress validation', data: { sourceAddress, sourceAddressTrimmed: sourceAddress?.trim?.(), isValidResult: sourceAddress?.trim?.() && StrKey.isValidEd25519PublicKey(sourceAddress.trim()) }, hypothesisId: 'H4', timestamp: Date.now() }) }).catch(() => { });
+        // #endregion
         const simSource = sourceAddress?.trim() && StrKey.isValidEd25519PublicKey(sourceAddress.trim())
             ? sourceAddress.trim()
             : SIMULATION_SOURCE_FALLBACK;
@@ -239,8 +286,10 @@ export class SoroSwapClient {
         }
         const networkName = config.horizonUrl.includes("testnet") ? "testnet" : "mainnet";
         const buildUrl = `${SOROSWAP_API_BASE}/quote/build?network=${networkName}`;
+        // Use original API data if available, otherwise fall back to simplified quote
+        const quoteForBuild = quote.rawData || quote;
         const buildBody = {
-            quote,
+            quote: quoteForBuild,
             from: fromAddress,
             to: fromAddress,
         };
@@ -294,6 +343,7 @@ function parseApiQuoteToQuoteResponse(data) {
         expectedOut,
         minOut,
         route,
+        rawData: data, // Preserve original API response
     });
 }
 function scValToI128String(scv) {

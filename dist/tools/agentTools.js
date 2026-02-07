@@ -2,29 +2,35 @@ import { z } from "zod";
 import { getNetworkConfig } from "../config/networks.js";
 import { StellarClient } from "../core/stellarClient.js";
 import { SoroSwapClient, TESTNET_ASSETS, } from "../defi/index.js";
-/** Resolve "XLM" | "USDC" | contractId (C...) to Soroban Asset for testnet. */
+/** Resolve "XLM" | "AUSDC" | "USDC" | contractId (C...) to Asset for testnet/mainnet. */
 function resolveAssetSymbol(symbol, network) {
     const s = symbol.trim().toUpperCase();
-    if (network !== "testnet") {
+    if (network === "mainnet") {
+        if (s === "XLM")
+            return { contractId: "CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA" }; // Native XLM SAC on mainnet
+        if (s === "USDC")
+            return { contractId: "CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75" }; // USDC SAC on mainnet
         if (s.startsWith("C") && s.length === 56)
             return { contractId: symbol.trim() };
-        throw new Error(`swap_asset on mainnet requires contract IDs (C...). Got: ${symbol}`);
+        throw new Error(`Unknown mainnet asset "${symbol}". Use XLM, USDC, or a Soroban contract ID (C...).`);
     }
+    // Testnet assets
     if (s === "XLM")
         return { contractId: TESTNET_ASSETS.XLM };
-    if (s === "USDC")
+    if (s === "AUSDC" || s === "USDC")
         return { contractId: TESTNET_ASSETS.USDC };
     if (s.startsWith("C") && symbol.length === 56)
         return { contractId: symbol.trim() };
-    throw new Error(`Unknown asset "${symbol}". Use XLM, USDC, or a Soroban contract ID (C...).`);
+    throw new Error(`Unknown testnet asset "${symbol}". Use XLM, AUSDC, or a Soroban contract ID (C...).`);
 }
-/** Convert human amount to raw units (7 decimals for XLM, 6 for USDC on testnet). */
+/** Convert human amount to raw units (7 decimals for XLM, 6 for USDC/AUSDC on testnet). */
 function toRawAmount(amount, assetSymbol) {
-    const a = amount.trim();
+    // Extract just the number part, removing any asset symbols
+    const a = amount.trim().replace(/\s*(XLM|USDC|AUSDC)$/i, '');
     if (!/^\d+(\.\d+)?$/.test(a))
         return a;
     const upper = assetSymbol.trim().toUpperCase();
-    const decimals = upper === "XLM" ? 7 : upper === "USDC" ? 6 : 7;
+    const decimals = upper === "XLM" ? 7 : upper === "USDC" || upper === "AUSDC" ? 6 : 7;
     const num = Number(a);
     if (!Number.isFinite(num) || num < 0)
         return a;
@@ -34,16 +40,17 @@ function toRawAmount(amount, assetSymbol) {
 export const tools = [
     {
         name: "check_balance",
-        description: "Get all token balances for a Stellar address",
+        description: "Get token balances for a Stellar address",
         parameters: z.object({
-            address: z.string().describe("Stellar public key (starts with G)"),
-            network: z.enum(["testnet", "mainnet"]).optional().default("testnet"),
+            address: z.string().describe("Stellar address"),
+            network: z.enum(["testnet", "mainnet"]).optional().default("mainnet"),
         }),
-        execute: async ({ address, network = "testnet", }) => {
-            const net = network ?? "testnet";
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/3d1882c5-dc48-494c-98b8-3a0080ef9d74', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'agentTools.ts:check_balance', message: 'check_balance params', data: { address, network: net }, hypothesisId: 'H1', timestamp: Date.now() }) }).catch(() => { });
-            // #endregion
+        execute: async ({ address, network = "mainnet", }) => {
+            const net = network ?? "mainnet";
+            // Pre-validate address
+            if (!address || address.length !== 56 || !address.startsWith('G')) {
+                throw new Error(`Invalid Stellar address. Must be 56 characters starting with G.`);
+            }
             const config = getNetworkConfig(net);
             const client = new StellarClient(config);
             const balances = await client.getBalance(address);
@@ -52,45 +59,48 @@ export const tools = [
     },
     {
         name: "swap_asset",
-        description: "Get quote and execute token swap via SoroSwap DEX (testnet: XLM, USDC or contract IDs)",
+        description: "Swap tokens via SoroSwap. Use XLM and USDC on mainnet.",
         parameters: z.object({
-            fromAsset: z
-                .string()
-                .describe("XLM or ASSET_CODE:ISSUER or Soroban contract ID (C...)"),
-            toAsset: z.string().describe("Same format as fromAsset"),
-            amount: z.string().describe("Amount to swap (e.g. '10' for 10 XLM)"),
-            address: z.string().describe("Your Stellar public key (G...)"),
-            network: z.enum(["testnet", "mainnet"]).default("testnet"),
-            privateKey: z
-                .string()
-                .optional()
-                .describe("Secret key for signing (DEMO ONLY). If omitted, returns quote only."),
+            fromAsset: z.string().describe("Asset to swap from (XLM or USDC)"),
+            toAsset: z.string().describe("Asset to swap to (XLM or USDC)"),
+            amount: z.string().describe("Amount to swap (number only)"),
+            address: z.string().describe("Stellar address"),
+            network: z.enum(["testnet", "mainnet"]).default("mainnet"),
+            privateKey: z.string().optional().describe("56-character secret key starting with S"),
         }),
         execute: async ({ fromAsset, toAsset, amount, address, network, privateKey, }) => {
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/3d1882c5-dc48-494c-98b8-3a0080ef9d74', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'agentTools.ts:swap_asset', message: 'swap params', data: { fromAsset, toAsset, addressLen: address?.length, addressTrimmed: address?.trim?.()?.length }, hypothesisId: 'H1', timestamp: Date.now() }) }).catch(() => { });
-            // #endregion
+            // Pre-validate address
+            if (!address || address.length !== 56 || !address.startsWith('G')) {
+                throw new Error(`Invalid Stellar address. Must be 56 characters starting with G.`);
+            }
+            // Pre-validate private key if provided
+            if (privateKey && (privateKey.length !== 56 || !privateKey.startsWith('S'))) {
+                throw new Error(`Invalid private key. Must be exactly 56 characters starting with S. Got ${privateKey?.length || 0} characters. Please provide the complete private key.`);
+            }
             const config = getNetworkConfig(network);
             const soroSwapClient = new SoroSwapClient(config);
             const from = resolveAssetSymbol(fromAsset.trim(), network);
             const to = resolveAssetSymbol(toAsset.trim(), network);
             const rawAmount = toRawAmount(amount, fromAsset.trim());
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/3d1882c5-dc48-494c-98b8-3a0080ef9d74', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'agentTools.ts:swap before getQuote', message: 'quote params', data: { fromId: from.contractId, toId: to.contractId }, hypothesisId: 'H1', timestamp: Date.now() }) }).catch(() => { });
-            // #endregion
             let quote;
             try {
-                quote = await soroSwapClient.getQuote(from, to, rawAmount, address?.trim());
+                // For quotes, don't pass sourceAddress since it's not required and causes validation issues
+                // Only pass sourceAddress when actually executing swaps
+                quote = await soroSwapClient.getQuote(from, to, rawAmount);
             }
             catch (err) {
                 const msg = err instanceof Error ? err.message : String(err);
                 if (msg.includes("invalid checksum") || msg.includes("invalid encoded")) {
-                    throw new Error("Swap quote failed: invalid key or contract format. Use testnet, XLM/USDC, no secret key for quote only.");
+                    throw new Error("Swap quote failed: invalid key or contract format. Use testnet, XLM/AUSDC, no secret key for quote only.");
                 }
                 if (msg.includes("SOROSWAP_API_KEY") ||
                     msg.includes("Quote via contract") ||
                     msg.includes("MismatchingParameterLen")) {
-                    throw new Error("Swap quotes need SOROSWAP_API_KEY. Get an API key from the SoroSwap console and set it to get XLM/USDC quotes.");
+                    throw new Error("Swap quotes need SOROSWAP_API_KEY. Get an API key from the SoroSwap console and set it to get XLM/AUSDC quotes.");
+                }
+                if (msg.includes("Invalid Stellar address") || msg.includes("No path found")) {
+                    // Provide a helpful message for testnet liquidity issues
+                    throw new Error(`No liquidity available for ${fromAsset} → ${toAsset} on testnet. This is a demo environment - in production, try different pairs or check SoroSwap for available liquidity pools.`);
                 }
                 throw err;
             }

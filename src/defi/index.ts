@@ -6,3 +6,4 @@ export {
   type Network,
 } from "./soroSwapClient.js";
 export { AssetSchema, QuoteResponseSchema } from "./soroSwapClient.js";
+export { NativeAmmClient } from "./nativeAmmClient.js";

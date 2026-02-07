@@ -22,12 +22,12 @@ function toOpenAITools(): ChatCompletionTool[] {
       type: "function",
       function: {
         name: "check_balance",
-        description: "Get all token balances for a Stellar address. Uses testnet by default; use network mainnet if the user's account is on mainnet.",
+        description: "Get token balances",
         parameters: {
           type: "object",
           properties: {
-            address: { type: "string", description: "Stellar public key (starts with G)" },
-            network: { type: "string", enum: ["testnet", "mainnet"], description: "Network (default testnet; use mainnet if user has mainnet account)" },
+            address: { type: "string", description: "Stellar address" },
+            network: { type: "string", enum: ["testnet", "mainnet"] },
           },
           required: ["address"],
         },
@@ -37,18 +37,18 @@ function toOpenAITools(): ChatCompletionTool[] {
       type: "function",
       function: {
         name: "swap_asset",
-        description: "Get quote and optionally execute token swap via SoroSwap DEX (testnet: XLM, USDC or contract IDs)",
+        description: "Swap tokens. Include privateKey to execute, omit for quote only.",
         parameters: {
           type: "object",
           properties: {
-            fromAsset: { type: "string", description: "XLM, USDC, or Soroban contract ID (C...)" },
-            toAsset: { type: "string", description: "Same format as fromAsset" },
-            amount: { type: "string", description: "Amount to swap (e.g. 10 for 10 XLM)" },
-            address: { type: "string", description: "Your Stellar public key (G...)" },
+            fromAsset: { type: "string", description: "Asset to swap from (XLM or USDC)" },
+            toAsset: { type: "string", description: "Asset to swap to (XLM or USDC)" },
+            amount: { type: "string", description: "Amount to swap (just the number, e.g. '0.2')" },
+            address: { type: "string", description: "Stellar address" },
             network: { type: "string", enum: ["testnet", "mainnet"], description: "Network" },
-            privateKey: { type: "string", description: "Secret key for signing (DEMO ONLY). Omit for quote only." },
+            privateKey: { type: "string", description: "Complete 56-character secret key starting with S" },
           },
-          required: ["fromAsset", "toAsset", "amount", "address"],
+          required: ["fromAsset", "toAsset", "amount", "address", "network"],
         },
       },
     },
@@ -68,9 +68,7 @@ function readLine(prompt: string): Promise<string> {
 
 /** Execute tool by name with parsed args; return string for the model. */
 async function runOneTool(name: string, args: Record<string, unknown>): Promise<string> {
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/3d1882c5-dc48-494c-98b8-3a0080ef9d74',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cliAgent.ts:runOneTool',message:'tool invoked',data:{name,argsKeys:Object.keys(args),address:args?.address,network:args?.network},hypothesisId:'H3',timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
+  console.log(`[DEBUG] Tool called: ${name} with args:`, JSON.stringify(args, null, 2));
   const tool = tools.find((t) => t.name === name);
   if (!tool) return JSON.stringify({ error: `Unknown tool: ${name}` });
   try {
@@ -79,9 +77,6 @@ async function runOneTool(name: string, args: Record<string, unknown>): Promise<
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     const stack = err instanceof Error ? err.stack : undefined;
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/3d1882c5-dc48-494c-98b8-3a0080ef9d74',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cliAgent.ts:runOneTool',message:'tool error',data:{name,errMsg:message,stack:(stack||'').slice(0,500)},hypothesisId:'H2',timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     return JSON.stringify({ error: message });
   }
 }
@@ -185,7 +180,8 @@ export function registerAgentCommand(program: Command): void {
 
           history.push({ role: "assistant", content: final });
         } catch (err) {
-          console.error("Agent error:", err instanceof Error ? err.message : err);
+          const message = err instanceof Error ? err.message : String(err);
+          console.error("Agent error:", message);
         }
       }
     });

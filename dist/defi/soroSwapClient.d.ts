@@ -19,50 +19,72 @@
 import { z } from "zod";
 import type { NetworkConfig } from "../config/networks.js";
 import { type NetworkName } from "../config/networks.js";
-/** Soroban token asset: contract ID (C...). */
+/** Soroban token: contract ID (C...) or Stellar classic asset (code + issuer). */
 export interface Asset {
-    contractId: string;
+    contractId?: string;
+    code?: string;
+    issuer?: string;
 }
-export declare const AssetSchema: z.ZodObject<{
+export declare const AssetSchema: z.ZodUnion<[z.ZodObject<{
     contractId: z.ZodString;
 }, "strip", z.ZodTypeAny, {
     contractId: string;
 }, {
     contractId: string;
-}>;
+}>, z.ZodObject<{
+    code: z.ZodString;
+    issuer: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    code: string;
+    issuer: string;
+}, {
+    code: string;
+    issuer: string;
+}>]>;
 export interface QuoteResponse {
     expectedIn: string;
     expectedOut: string;
     minOut: string;
     route: string[];
+    rawData?: unknown;
 }
 export declare const QuoteResponseSchema: z.ZodObject<{
     expectedIn: z.ZodString;
     expectedOut: z.ZodString;
     minOut: z.ZodString;
     route: z.ZodArray<z.ZodString, "many">;
+    rawData: z.ZodOptional<z.ZodUnknown>;
 }, "strip", z.ZodTypeAny, {
     expectedIn: string;
     expectedOut: string;
     minOut: string;
     route: string[];
+    rawData?: unknown;
 }, {
     expectedIn: string;
     expectedOut: string;
     minOut: string;
     route: string[];
+    rawData?: unknown;
 }>;
 /** Network name for executeSwap. */
 export type Network = NetworkName;
-/** Known testnet token contract IDs for quick tests (SoroSwap docs). */
+/** Testnet: XLM (wrapped contract ID); AUSDC = classic testnet USDC with liquidity on SoroSwap. */
 export declare const TESTNET_ASSETS: {
     readonly XLM: "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC";
+    /** Classic testnet USDC (has liquidity). Use for testnet swaps. */
+    readonly AUSDC: {
+        readonly code: "AUSDC";
+        readonly issuer: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN";
+    };
+    /** Legacy testnet USDC contract (often no path); prefer AUSDC. */
     readonly USDC: "CBBHRKEP5M3NUDRISGLJKGHDHX3DA2CN2AZBQY6WLVUJ7VNLGSKBDUCM";
 };
 export declare class SoroSwapClient {
     private readonly sorobanServer;
     private readonly networkConfig;
     private readonly apiKey;
+    private readonly nativeAmmClient;
     constructor(networkConfig: NetworkConfig, apiKey?: string);
     /**
      * Get a swap quote: expected in/out, minOut, route.

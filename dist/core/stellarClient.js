@@ -26,8 +26,17 @@ export class StellarClient {
      * Fetch all balances for an account (XLM + trust lines).
      */
     async getBalance(address) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/3d1882c5-dc48-494c-98b8-3a0080ef9d74', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'stellarClient.ts:getBalance', message: 'address validation entry', data: { originalAddress: address, originalLen: address?.length, addressAfterTrim: address?.trim?.(), trimmedLen: address?.trim?.()?.length }, hypothesisId: 'H1', timestamp: Date.now() }) }).catch(() => { });
+        // #endregion
         const normalized = address.trim();
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/3d1882c5-dc48-494c-98b8-3a0080ef9d74', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'stellarClient.ts:getBalance', message: 'StrKey validation', data: { normalized, normalizedLen: normalized?.length, startsWithG: normalized?.startsWith?.('G'), isValidResult: StrKey.isValidEd25519PublicKey(normalized) }, hypothesisId: 'H2', timestamp: Date.now() }) }).catch(() => { });
+        // #endregion
         if (!StrKey.isValidEd25519PublicKey(normalized)) {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/3d1882c5-dc48-494c-98b8-3a0080ef9d74', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'stellarClient.ts:getBalance', message: 'StrKey validation failed', data: { normalized, reason: 'StrKey.isValidEd25519PublicKey returned false' }, hypothesisId: 'H2', timestamp: Date.now() }) }).catch(() => { });
+            // #endregion
             throw new Error("Stellar address has invalid checksum or format. Check for typos or extra spaces; use a 56-character key starting with G.");
         }
         const parsed = StellarAddressSchema.safeParse(normalized);
