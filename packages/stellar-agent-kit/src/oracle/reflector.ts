@@ -16,8 +16,8 @@ import type { NetworkConfig } from "../config/networks.js";
 
 import { REFLECTOR_ORACLE } from "../config/oracles.js";
 
-/** Well-known funded mainnet account used only as simulation source (read-only). */
-const SIMULATION_SOURCE_MAINNET = "GDJJRRMBK4IWLEPJGIE6SXD2LP7REGZODU7WDC3I2D6MR37F4XWHBKX2";
+/** Well-known funded mainnet account used only as simulation source (read-only). Must be valid StrKey and exist on mainnet. */
+const SIMULATION_SOURCE_MAINNET = "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN";
 
 /** Either a Soroban token contract ID (C...) or a ticker symbol (e.g. "XLM", "BTC") for off-chain feeds. */
 export type OracleAsset = { contractId: string } | { symbol: string };
@@ -51,9 +51,13 @@ function assetToScVal(asset: OracleAsset): xdr.ScVal {
 /**
  * Parse lastprice result: Option<PriceData> -> PriceData.
  * Option = vec 0 or 1 element. PriceData = struct as vec [price, timestamp] (unnamed) or map.
+ * Accepts either base64 string (raw RPC) or already-parsed ScVal (SDK parseRawSimulation).
  */
-function parseLastPriceRetval(retvalB64: string, decimals: number): PriceData {
-  const retval = xdr.ScVal.fromXDR(retvalB64, "base64");
+function parseLastPriceRetval(retvalInput: string | xdr.ScVal, decimals: number): PriceData {
+  const retval =
+    typeof retvalInput === "string"
+      ? xdr.ScVal.fromXDR(retvalInput, "base64")
+      : retvalInput;
   const vec = retval.vec();
   if (!vec || vec.length === 0) {
     throw new Error("Oracle returned no price (None) for this asset");
@@ -129,9 +133,9 @@ export function createReflectorOracle(config: ReflectorOracleConfig) {
       .build();
     const sim = await server.simulateTransaction(tx);
     if ("error" in sim && sim.error) throw new Error(String(sim.error));
-    const ret = (sim as { result?: { retval?: string } })?.result?.retval;
-    if (!ret) throw new Error("No decimals retval");
-    const val = xdr.ScVal.fromXDR(ret, "base64");
+    const ret = (sim as { result?: { retval?: string | xdr.ScVal } })?.result?.retval;
+    if (ret == null) throw new Error("No decimals retval");
+    const val = typeof ret === "string" ? xdr.ScVal.fromXDR(ret, "base64") : ret;
     const u = val.u32();
     return u ?? 7;
   }
@@ -150,8 +154,8 @@ export function createReflectorOracle(config: ReflectorOracleConfig) {
       .build();
     const sim = await server.simulateTransaction(tx);
     if ("error" in sim && sim.error) throw new Error(String(sim.error));
-    const ret = (sim as { result?: { retval?: string } })?.result?.retval;
-    if (!ret) throw new Error("Oracle lastprice: no retval");
+    const ret = (sim as { result?: { retval?: string | xdr.ScVal } })?.result?.retval;
+    if (ret == null) throw new Error("Oracle lastprice: no retval");
     const dec = await decimals();
     return parseLastPriceRetval(ret, dec);
   }

@@ -112,7 +112,7 @@ var REFLECTOR_ORACLE = {
 var BAND_ORACLE = "CCQXWMZVM3KRTXTUPTN53YHL272QGKF32L7XEDNZ2S6OSUFK3NFBGG5M";
 
 // src/oracle/reflector.ts
-var SIMULATION_SOURCE_MAINNET = "GDJJRRMBK4IWLEPJGIE6SXD2LP7REGZODU7WDC3I2D6MR37F4XWHBKX2";
+var SIMULATION_SOURCE_MAINNET = "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN";
 function assetToScVal(asset) {
   if ("contractId" in asset && asset.contractId) {
     const addr = new Address(asset.contractId);
@@ -129,8 +129,8 @@ function assetToScVal(asset) {
   }
   throw new Error("Oracle asset must be { contractId } or { symbol }");
 }
-function parseLastPriceRetval(retvalB64, decimals) {
-  const retval = xdr.ScVal.fromXDR(retvalB64, "base64");
+function parseLastPriceRetval(retvalInput, decimals) {
+  const retval = typeof retvalInput === "string" ? xdr.ScVal.fromXDR(retvalInput, "base64") : retvalInput;
   const vec = retval.vec();
   if (!vec || vec.length === 0) {
     throw new Error("Oracle returned no price (None) for this asset");
@@ -195,8 +195,8 @@ function createReflectorOracle(config) {
     const sim = await server.simulateTransaction(tx);
     if ("error" in sim && sim.error) throw new Error(String(sim.error));
     const ret = sim?.result?.retval;
-    if (!ret) throw new Error("No decimals retval");
-    const val = xdr.ScVal.fromXDR(ret, "base64");
+    if (ret == null) throw new Error("No decimals retval");
+    const val = typeof ret === "string" ? xdr.ScVal.fromXDR(ret, "base64") : ret;
     const u = val.u32();
     return u ?? 7;
   }
@@ -212,7 +212,7 @@ function createReflectorOracle(config) {
     const sim = await server.simulateTransaction(tx);
     if ("error" in sim && sim.error) throw new Error(String(sim.error));
     const ret = sim?.result?.retval;
-    if (!ret) throw new Error("Oracle lastprice: no retval");
+    if (ret == null) throw new Error("Oracle lastprice: no retval");
     const dec = await decimals();
     return parseLastPriceRetval(ret, dec);
   }
