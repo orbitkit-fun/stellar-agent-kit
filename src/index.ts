@@ -16,10 +16,10 @@ program
   .command("balance")
   .description("Get balance for a Stellar address (G...)")
   .argument("<address>", "Stellar public key (G...)")
-  .option("-n, --network <name>", "Network: testnet | mainnet", "testnet")
+  .option("-n, --network <name>", "Network (mainnet only)", "mainnet")
   .action(async (address: string, opts: { network: string }) => {
     try {
-      const config = getNetworkConfig(opts.network);
+      const config = getNetworkConfig();
       const client = new StellarClient(config);
       const balances = await client.getBalance(address);
       console.log(JSON.stringify(balances, null, 2));
@@ -35,7 +35,7 @@ program
   .argument("<from-secret>", "Sender secret key (S...)")
   .argument("<to>", "Destination public key (G...)")
   .argument("<amount>", "Amount (e.g. 100 or 10.5)")
-  .option("-n, --network <name>", "Network: testnet | mainnet", "testnet")
+  .option("-n, --network <name>", "Network (mainnet only)", "mainnet")
   .option("-a, --asset <code>", "Asset code (default: XLM)")
   .option("-i, --issuer <address>", "Asset issuer (G...) when using --asset")
   .action(
@@ -50,7 +50,7 @@ program
           console.error("Error: --issuer is required when using --asset");
           process.exit(1);
         }
-        const config = getNetworkConfig(opts.network);
+        const config = getNetworkConfig();
         const client = new StellarClient(config);
         const result = await client.sendPayment(
           fromSecret,

@@ -2,14 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { SoroSwapClient } from '@/lib/agent-kit/defi/soroSwapClient'
 import { getNetworkConfig } from '@/lib/agent-kit/config/networks'
 
-function normalizeNetwork(name: string): "testnet" | "mainnet" {
-  const n = name?.toLowerCase().trim() ?? ""
-  return n === "testnet" ? "testnet" : "mainnet"
-}
-
 export async function POST(request: NextRequest) {
   try {
-    const { quote, fromAddress, network } = await request.json()
+    const { quote, fromAddress } = await request.json()
 
     if (!quote || !fromAddress) {
       return NextResponse.json(
@@ -18,8 +13,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const networkName = normalizeNetwork(network ?? "mainnet")
-    const networkConfig = getNetworkConfig(networkName)
+    const networkConfig = getNetworkConfig()
     const apiKey = process.env.SOROSWAP_API_KEY
 
     if (!apiKey) {
@@ -36,7 +30,7 @@ export async function POST(request: NextRequest) {
     const { xdr } = await soroSwapClient.buildSwapTransaction(
       quote,
       fromAddress,
-      networkName
+      "mainnet"
     )
 
     return NextResponse.json({ xdr })

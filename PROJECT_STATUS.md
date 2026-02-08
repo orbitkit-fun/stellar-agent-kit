@@ -26,8 +26,10 @@
 | `sendPayment(to, amount, assetCode?, assetIssuer?)` | Done | Horizon classic payment (XLM or custom asset) |
 | Config | Done | `MAINNET_ASSETS`, `TESTNET_ASSETS`, `getNetworkConfig`, `SOROSWAP_AGGREGATOR` |
 | Pluggable DEX | Done | `createDexClient` → SoroSwap; design allows more DEXes later |
+| **Oracle (Reflector)** | Done | `getPrice(asset)` — SEP-40 lastprice; `createReflectorOracle`, `REFLECTOR_ORACLE`, `BAND_ORACLE` |
+| **Lending (Blend)** | Done | `lendingSupply(args)`, `lendingBorrow(args)` via `@blend-capital/blend-sdk`; `BLEND_POOLS` |
 
-**Gap:** Lending, oracles, cross-chain are not implemented (placeholders only in agent comments).
+**Cross-chain & perps:** Cross-chain bridges (e.g. [Allbridge](https://allbridge.medium.com/allbridge-core-launches-a-bridge-to-stellar-14156f59e925) to Stellar) are external services; no SDK integration yet. Perpetuals have no native Stellar/Soroban integration at this time; when available, they can be added the same way as oracle/lending.
 
 ---
 
@@ -113,9 +115,7 @@ No secret key in the browser; all execution goes through API + Freighter signing
 
 | Item | Priority | Notes |
 |------|----------|-------|
-| Lending protocol | Optional | No Stellar lending module yet; design is pluggable |
-| Price oracles | Optional | No oracle module |
-| Cross-chain / bridges | Optional | Not in scope for current devkit |
+| Cross-chain / bridges | Optional | Not in scope; external services only |
 | Publish to npm | Done | All four packages published; `npm i stellar-agent-kit` etc. and `npx create-stellar-devkit-app` work. |
 
 ---
@@ -124,6 +124,7 @@ No secret key in the browser; all execution goes through API + Freighter signing
 
 | Item | Priority | Notes |
 |------|----------|-------|
+| send_payment tool | Done | CLI agent can send XLM/USDC via send_payment tool |
 | Expose agent in UI | Optional | CLI agent exists; no chat UI in the app yet |
 | More tools | Optional | e.g. “list assets”, “estimate fees” |
 | Other LLM providers | Optional | Currently OpenAI-only in CLI |
@@ -135,7 +136,7 @@ No secret key in the browser; all execution goes through API + Freighter signing
 | Item | Priority | Notes |
 |------|----------|-------|
 | More resources | Low | Add more Stellar docs/snippets as needed |
-| More tools | Low | e.g. “get_quote” that calls SDK under the hood |
+| get_quote tool | Low | e.g. “get_quote” that calls SDK under the hood |
 
 ---
 
@@ -144,7 +145,7 @@ No secret key in the browser; all execution goes through API + Freighter signing
 | Item | Priority | Notes |
 |------|----------|-------|
 | Protocols page layout | Done in this pass | Wider layout, less crowded, code blocks with more space |
-| sdk-fe | Low | Placeholder; dashboard/docs could be expanded later |
+| sdk-fe | Low | Optional dashboard/docs frontend; main docs in repo |
 | Agent chat in browser | Optional | Would mirror CLI `agent` in the UI |
 
 ---
@@ -163,15 +164,15 @@ No secret key in the browser; all execution goes through API + Freighter signing
 
 | Area | Done | Left |
 |------|------|------|
-| **StellarAgentKit (SDK)** | Quote, swap, send, config, SoroSwap aggregator | Lending, oracles, cross-chain |
-| **AI agent** | CLI agent + 4 tools (balance, swap, quote, trustline) | Chat UI in browser, more tools, other LLMs |
-| **MCP** | Server, resources, 2 tools | More resources/tools |
+| **StellarAgentKit (SDK)** | Quote, swap, send, config, SoroSwap aggregator, Reflector oracle, Blend lending | Cross-chain (external only) |
+| **AI agent** | CLI agent + 5 tools (balance, swap, quote, trustline, send_payment) | Chat UI in browser, more tools, other LLMs |
+| **MCP** | Server, resources, tools (contract, snippet, get_quote) | More resources/tools |
 | **x402** | Server + client, verification | — |
 | **CLI scaffolder** | 2 templates | — |
 | **Warly UI** | Swap, Send, Protocols, DevKit, wallet | Optional: in-browser agent chat |
 | **Docs** | GETTING_STARTED, DEVKIT_README, README | — |
 
-**Bottom line:** The core of an “AI devkit for Stellar” is **done**: you have a unified SDK (swap, quote, send), an AI agent (CLI with Groq/OpenAI + Stellar tools), MCP for LLMs, x402 for paid APIs, a full UI (swap, send, protocols), and **all packages are published to npm**. What’s **left** is mostly optional (lending, oracles, chat UI, publish to npm, tests) or polish (layout, sdk-fe).
+**Bottom line:** The core of an “AI devkit for Stellar” is **done**: you have a unified SDK (swap, quote, send), an AI agent (CLI with Groq/OpenAI + Stellar tools), MCP for LLMs, x402 for paid APIs, a full UI (swap, send, protocols), and **all packages are published to npm**. What’s **left** is mostly optional (chat UI, cross-chain, more tools) or polish (tests, CI).
 
 ---
 

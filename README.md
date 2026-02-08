@@ -19,10 +19,10 @@ Get balances for a Stellar address (XLM + trust lines):
 
 ```bash
 # Testnet (default)
-npm run balance -- GABC... --network=testnet
+npm run balance -- GABC... --network=mainnet
 
 # Or after build
-node dist/index.js balance GABC... --network=testnet
+node dist/index.js balance GABC... --network=mainnet
 
 # Mainnet
 node dist/index.js balance GABC... --network=mainnet
@@ -49,10 +49,10 @@ Send XLM or a custom asset:
 
 ```bash
 # XLM payment
-node dist/index.js pay S... G... 10 --network=testnet
+node dist/index.js pay S... G... 10 --network=mainnet
 
 # Custom asset
-node dist/index.js pay S... G... 100 --network=testnet --asset=USDC --issuer=G...
+node dist/index.js pay S... G... 100 --network=mainnet --asset=USDC --issuer=G...
 ```
 
 ## Programmatic use
@@ -61,7 +61,7 @@ node dist/index.js pay S... G... 100 --network=testnet --asset=USDC --issuer=G..
 import { getNetworkConfig } from "./config/networks.js";
 import { StellarClient } from "./core/stellarClient.js";
 
-const config = getNetworkConfig("testnet");
+const config = getNetworkConfig("mainnet");
 const client = new StellarClient(config);
 
 const balances = await client.getBalance("G...");
@@ -70,7 +70,7 @@ const result = await client.sendPayment("S...", "G...", "10");
 
 ## Project layout
 
-- `src/config/networks.ts` – testnet/mainnet config (Horizon, Soroban RPC, Friendbot)
+- `src/config/networks.ts` – mainnet config (Horizon, Soroban RPC)
 - `src/core/stellarClient.ts` – `StellarClient`: `getBalance()`, `sendPayment()`
 - `src/index.ts` – CLI (Commander)
 

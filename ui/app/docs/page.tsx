@@ -171,7 +171,7 @@ console.log(result.hash);`}
             <li>POST <code className="rounded bg-zinc-800 px-1">/api/send/build</code> — Build payment transaction.</li>
             <li>POST <code className="rounded bg-zinc-800 px-1">/api/send/submit</code> — Submit signed payment.</li>
             <li>GET <code className="rounded bg-zinc-800 px-1">/api/balance?address=...&network=...</code> — Account balances.</li>
-            <li>GET <code className="rounded bg-zinc-800 px-1">/api/v1/validate?appId=...</code> — DevKit project validation (demo).</li>
+            <li>GET <code className="rounded bg-zinc-800 px-1">/api/v1/validate?appId=...</code> — DevKit project validation (valid only for appIds registered when creating a project).</li>
           </ul>
           <p className="text-zinc-400 text-sm">
             DevKit page: create a project (APP Id, API endpoint), browse Protocols, copy code from Code generator, and set up MCP. See{" "}

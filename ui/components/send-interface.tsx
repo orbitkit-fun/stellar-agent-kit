@@ -7,7 +7,6 @@ import { GlowingEffect } from "@/components/ui/glowing-effect"
 import { signTransaction } from "@stellar/freighter-api"
 import { Networks } from "@stellar/stellar-sdk"
 import { useAccount } from "@/hooks/use-account"
-import { normalizeNetwork } from "@/lib/network"
 import { ConnectButton } from "./connect-button"
 import { toast } from "sonner"
 import {
@@ -18,27 +17,19 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ChevronDown } from "lucide-react"
 
-const TESTNET_ASSETS = [
+/** Mainnet only. */
+const ASSETS = [
   { symbol: "XLM", name: "Stellar Lumens" },
   { symbol: "USDC", name: "USD Coin" },
 ] as const
 
-const MAINNET_ASSETS = [
-  { symbol: "XLM", name: "Stellar Lumens" },
-  { symbol: "USDC", name: "USD Coin" },
-] as const
-
-// USDC issuer (Circle) – same on testnet/mainnet for classic
-const USDC_ISSUER = "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"
+const USDC_ISSUER_MAINNET = "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"
 
 export function SendInterface() {
   const { account } = useAccount()
-  const network = account ? normalizeNetwork(account.network) : "mainnet"
-  const assets = network === "mainnet" ? MAINNET_ASSETS : TESTNET_ASSETS
-
   const [toAddress, setToAddress] = useState("")
   const [amount, setAmount] = useState("")
-  const [asset, setAsset] = useState<{ symbol: string; name: string }>(assets[0])
+  const [asset, setAsset] = useState<{ symbol: string; name: string }>(ASSETS[0])
   const [isLoading, setIsLoading] = useState(false)
 
   const buildPayment = async (): Promise<{ xdr: string }> => {
@@ -50,8 +41,7 @@ export function SendInterface() {
         to: toAddress.trim(),
         amount: amount.trim(),
         assetCode: asset.symbol === "XLM" ? undefined : asset.symbol,
-        assetIssuer: asset.symbol === "USDC" ? USDC_ISSUER : undefined,
-        network,
+        assetIssuer: asset.symbol === "USDC" ? USDC_ISSUER_MAINNET : undefined,
       }),
     })
     if (!res.ok) {
@@ -65,7 +55,7 @@ export function SendInterface() {
     const res = await fetch("/api/send/submit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ signedXdr, network }),
+      body: JSON.stringify({ signedXdr }),
     })
     if (!res.ok) {
       const data = await res.json().catch(() => ({}))
@@ -81,7 +71,7 @@ export function SendInterface() {
     try {
       setIsLoading(true)
       const { xdr } = await buildPayment()
-      const networkPassphrase = network === "testnet" ? Networks.TESTNET : Networks.PUBLIC
+      const networkPassphrase = Networks.PUBLIC
       const signResult = await signTransaction(xdr, { networkPassphrase })
       if (signResult.error) {
         if (signResult.error.message?.toLowerCase().includes("rejected")) {
@@ -155,7 +145,7 @@ export function SendInterface() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-zinc-950 border-zinc-800">
-                {assets.map((a) => (
+                {ASSETS.map((a) => (
                   <DropdownMenuItem
                     key={a.symbol}
                     onClick={() => setAsset(a)}

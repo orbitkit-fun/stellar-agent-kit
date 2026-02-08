@@ -118,8 +118,9 @@ flowchart TB
 
 | Area | Status | Notes |
 |------|--------|-------|
-| Lending, oracles, cross-chain | 🔲 Placeholders only | SDK design allows; no Stellar modules yet |
-| send_payment **tool** in agent | 🔲 Optional | UI Send + CLI `pay` exist; agent could expose tool |
+| Lending, oracles | ✅ Done | Reflector oracle, Blend lending in SDK |
+| Cross-chain | 🔲 Optional | External services only; not in SDK |
+| send_payment **tool** in agent | ✅ Done | CLI agent has send_payment tool |
 | Unit tests | 🔲 Recommended | For tools, SDK, API routes |
 | In-browser agent chat | 🔲 Optional | CLI agent exists; no chat UI in app |
 

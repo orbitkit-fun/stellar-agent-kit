@@ -50,7 +50,7 @@ export class NativeAmmClient {
       return {
         expectedIn: amount,
         expectedOut: bestPath.destination_amount,
-        minOut: bestPath.destination_amount, // For demo, use same as expected
+        minOut: bestPath.destination_amount,
         route: bestPath.path.map((asset: any) => 
           asset.asset_type === 'native' 
             ? 'XLM' 
@@ -69,16 +69,13 @@ export class NativeAmmClient {
   }
 
   async executeSwap(
-    privateKey: string, 
-    quote: QuoteResponse, 
-    network: string
+    _privateKey: string,
+    _quote: QuoteResponse,
+    _network: string
   ): Promise<{ hash: string; status: string }> {
-    // For demo purposes, return a simulated transaction
-    // In production, this would build and submit a pathPaymentStrictSend transaction
-    return {
-      hash: `DEMO_TX_${Date.now().toString(36).toUpperCase()}`,
-      status: 'SIMULATED_SUCCESS'
-    };
+    throw new Error(
+      "Execution not supported via NativeAmmClient. Use SoroSwap (set SOROSWAP_API_KEY) to execute swaps."
+    );
   }
 
   private parseAsset(assetStr: string): Asset {

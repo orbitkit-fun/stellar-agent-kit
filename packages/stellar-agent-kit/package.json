@@ -36,6 +36,7 @@
     "typescript"
   ],
   "dependencies": {
+    "@blend-capital/blend-sdk": "^3.2.0",
     "@stellar/stellar-sdk": "^14.0.0",
     "zod": "^3.23.0"
   },

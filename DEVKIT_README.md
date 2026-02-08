@@ -14,7 +14,7 @@ Stellar DevKit mirrors the [Mantle DevKit](https://github.com/Debanjannnn/mantle
 | **x402-stellar-sdk** | HTTP 402 Payment Required with Stellar payments – server middleware and `x402Fetch` client |
 | **create-stellar-devkit-app** | CLI to scaffold Agent Kit or x402 API apps |
 | **stellar-devkit-mcp** | MCP server for LLM tools (contract addresses, SDK snippets) |
-| **sdk-fe** | Dashboard/docs frontend (placeholder) |
+| **sdk-fe** | Optional dashboard/docs; main docs in repo |
 
 ## Package Summary
 

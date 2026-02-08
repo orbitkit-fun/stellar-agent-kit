@@ -15,8 +15,10 @@
 | 1.5 | **Send payment** | `sendPayment(to, amount, assetCode?, assetIssuer?)` — Horizon payment (XLM or custom asset). |
 | 1.6 | **Config** | `MAINNET_ASSETS`, `TESTNET_ASSETS`, `getNetworkConfig(network)`, `SOROSWAP_AGGREGATOR`. |
 | 1.7 | **Pluggable DEX** | `createDexClient(config, apiKey)` — SoroSwap wired; design allows more DEXes. |
+| 1.8 | **Oracle (Reflector)** | `getPrice(asset)` — SEP-40 lastprice; asset = `{ contractId }` or `{ symbol }`. `REFLECTOR_ORACLE`, `BAND_ORACLE`. |
+| 1.9 | **Lending (Blend)** | `lendingSupply({ poolId, assetContractId, amount })`, `lendingBorrow(...)`. `BLEND_POOLS` for mainnet/testnet. |
 
-**Not in scope (yet):** Lending, oracles, cross-chain (placeholders only).
+**Not in SDK yet:** Cross-chain (e.g. Allbridge) and perps — no Stellar-native integration; can be added when available.
 
 ---
 

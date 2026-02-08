@@ -8,22 +8,19 @@ export const NetworkConfigSchema = z.object({
 
 export type NetworkConfig = z.infer<typeof NetworkConfigSchema>;
 
-export const testnet: NetworkConfig = {
-  horizonUrl: "https://horizon-testnet.stellar.org",
-  sorobanRpcUrl: "https://soroban-testnet.stellar.org",
-  friendbotUrl: "https://friendbot.stellar.org",
-};
-
+/** Mainnet config. This project is mainnet-only. */
 export const mainnet: NetworkConfig = {
   horizonUrl: "https://horizon.stellar.org",
   sorobanRpcUrl: "https://soroban-rpc.mainnet.stellar.gateway.fm",
 };
 
-export const networks = { testnet, mainnet } as const;
+export const networks = { mainnet } as const;
 export type NetworkName = keyof typeof networks;
 
-export function getNetworkConfig(name: string): NetworkConfig {
-  const parsed = z.enum(["testnet", "mainnet"]).safeParse(name);
-  if (!parsed.success) throw new Error(`Invalid network: ${name}. Use "testnet" or "mainnet".`);
-  return networks[parsed.data];
+/** Returns mainnet config. This project is mainnet-only. */
+export function getNetworkConfig(name?: string): NetworkConfig {
+  if (name && name !== "mainnet") {
+    throw new Error("This project is mainnet-only. Use network: 'mainnet'.");
+  }
+  return mainnet;
 }

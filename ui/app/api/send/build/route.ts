@@ -2,14 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { Asset, TransactionBuilder, Operation, Networks, Horizon } from "@stellar/stellar-sdk";
 import { getNetworkConfig } from "@/lib/agent-kit/config/networks";
 
-function normalizeNetwork(name: string): "testnet" | "mainnet" {
-  const n = name?.toLowerCase().trim() ?? "";
-  return n === "testnet" ? "testnet" : "mainnet";
-}
-
 export async function POST(request: NextRequest) {
   try {
-    const { fromAddress, to, amount, assetCode, assetIssuer, network } = await request.json();
+    const { fromAddress, to, amount, assetCode, assetIssuer } = await request.json();
 
     if (!fromAddress || !to || amount == null || amount === "") {
       return NextResponse.json(
@@ -18,11 +13,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const networkName = normalizeNetwork(network ?? "mainnet");
-    const config = getNetworkConfig(networkName);
+    const config = getNetworkConfig();
     const horizon = new Horizon.Server(config.horizonUrl);
-    const networkPassphrase =
-      networkName === "testnet" ? Networks.TESTNET : Networks.PUBLIC;
+    const networkPassphrase = Networks.PUBLIC;
 
     const sourceAccount = await horizon.loadAccount(fromAddress);
     const asset =

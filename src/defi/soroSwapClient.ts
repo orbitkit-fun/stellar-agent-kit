@@ -310,9 +310,6 @@ export class SoroSwapClient {
       ? Networks.TESTNET
       : Networks.PUBLIC;
 
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/3d1882c5-dc48-494c-98b8-3a0080ef9d74',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'soroSwapClient.ts:getQuoteViaContract',message:'sourceAddress validation',data:{sourceAddress,sourceAddressTrimmed:sourceAddress?.trim?.(),isValidResult:sourceAddress?.trim?.() && StrKey.isValidEd25519PublicKey(sourceAddress.trim())},hypothesisId:'H4',timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     const simSource =
       sourceAddress?.trim() && StrKey.isValidEd25519PublicKey(sourceAddress.trim())
         ? sourceAddress.trim()

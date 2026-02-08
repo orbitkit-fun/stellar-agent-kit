@@ -28,10 +28,7 @@ export function WalletData() {
 
   const openInExplorer = () => {
     if (account?.publicKey) {
-      const explorerUrl = account.network === "TESTNET" 
-        ? `https://stellar.expert/explorer/testnet/account/${account.publicKey}`
-        : `https://stellar.expert/explorer/public/account/${account.publicKey}`
-      window.open(explorerUrl, "_blank")
+      window.open(`https://stellar.expert/explorer/public/account/${account.publicKey}`, "_blank")
     }
     setDropdownOpen(false)
   }

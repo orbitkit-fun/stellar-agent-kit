@@ -65,10 +65,9 @@ export class NativeAmmClient {
     _quote: QuoteResponse,
     _network: string
   ): Promise<{ hash: string; status: string }> {
-    return {
-      hash: `DEMO_TX_${Date.now().toString(36).toUpperCase()}`,
-      status: "SIMULATED_SUCCESS",
-    };
+    throw new Error(
+      "Execution not supported via NativeAmmClient. Use SoroSwap (set SOROSWAP_API_KEY) to execute swaps."
+    );
   }
 
   private parseAsset(assetStr: string): Asset {

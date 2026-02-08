@@ -35,7 +35,7 @@ See **PUBLISHING.md** for versioning and re-publish. See **FEATURES.md** for the
 | **Publishing** | All four packages are on npm. See **PUBLISHING.md** for re-publish/versioning. Anyone can `npm install` / `npx create-stellar-devkit-app`. |
 | **Agent-kit template** | CLI template is minimal (see “Starter kit” below). For a full swap UI, use the **`ui`** app in this repo as the reference/starter. |
 | **SoroSwap API key** | Required for **executing** swaps (quote works without it). Get from [SoroSwap](https://soroswap.finance) / their developer console. |
-| **Lending / oracles** | Not implemented; design is pluggable for future modules. |
+| **Lending / oracles** | Implemented: Reflector oracle (`getPrice`), Blend lending (`lendingSupply`, `lendingBorrow`). |
 
 ---
 

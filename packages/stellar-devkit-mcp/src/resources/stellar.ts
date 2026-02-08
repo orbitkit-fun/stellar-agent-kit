@@ -9,7 +9,6 @@ export const STELLAR_RESOURCES: Record<string, { content: string; description: s
 
 | Network | Horizon | Soroban RPC |
 |---------|---------|-------------|
-| testnet | https://horizon-testnet.stellar.org | https://soroban-testnet.stellar.org |
 | mainnet | https://horizon.stellar.org | https://soroban-rpc.mainnet.stellar.gateway.fm |
 `,
   },
@@ -17,16 +16,15 @@ export const STELLAR_RESOURCES: Record<string, { content: string; description: s
     description: "Protocol contract IDs (SoroSwap aggregator)",
     content: `# Contract Addresses (Soroban)
 
-- SoroSwap Aggregator testnet: CCJUD55AG6W5HAI5LRVNKAE5WDP5XGZBUDS5WNTIVDU7O264UZZE7BRD
 - SoroSwap Aggregator mainnet: CAG5LRYQ5JVEUI5TEID72EYOVX44TTUJT5BQR2J6J77FH65PCCFAJDDH
 `,
   },
   "stellar://assets": {
-    description: "Testnet and mainnet asset identifiers",
-    content: `# Token / Asset Addresses
+    description: "Mainnet asset identifiers",
+    content: `# Token / Asset Addresses (Mainnet)
 
-Testnet: XLM (wrapped) CDLZFC3..., USDC CBBHRKEP5...; AUSDC classic GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN
-Mainnet: XLM CAS3J7GY..., USDC CCW67TSZV3...
+XLM: CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA
+USDC: CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75
 `,
   },
 };

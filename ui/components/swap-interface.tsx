@@ -10,7 +10,6 @@ import { Networks } from "@stellar/stellar-sdk"
 import { useAccount } from "@/hooks/use-account"
 import { useSoroSwap } from "@/hooks/use-soroswap"
 import { useBalance } from "@/hooks/use-balance"
-import { normalizeNetwork } from "@/lib/network"
 import { ConnectButton } from "./connect-button"
 import { toast } from "sonner"
 import {
@@ -20,22 +19,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-const TESTNET_ASSETS = {
-  XLM: {
-    symbol: "XLM",
-    name: "Stellar Lumens",
-    contractId: "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
-    decimals: 7,
-  },
-  USDC: {
-    symbol: "USDC",
-    name: "USD Coin",
-    contractId: "CBBHRKEP5M3NUDRISGLJKGHDHX3DA2CN2AZBQY6WLVUJ7VNLGSKBDUCM",
-    decimals: 7,
-  },
-} as const
-
-const MAINNET_ASSETS = {
+/** Mainnet only. */
+const ASSETS = {
   XLM: {
     symbol: "XLM",
     name: "Stellar Lumens",
@@ -57,35 +42,18 @@ type Asset = {
   decimals: number
 }
 
-function getAssetsForNetwork(network: "testnet" | "mainnet"): Record<string, Asset> {
-  return network === "mainnet" ? MAINNET_ASSETS : TESTNET_ASSETS
-}
-
 export function SwapInterface() {
   const { account } = useAccount()
   const { getQuote, buildSwap, submitSwap, isLoading: soroSwapLoading } = useSoroSwap()
   const { getBalance, refetch: refetchBalances, isLoading: balanceLoading } = useBalance()
-  const network = account ? normalizeNetwork(account.network) : "mainnet"
-  const assets = getAssetsForNetwork(network)
-  const [fromAsset, setFromAsset] = useState<Asset>(MAINNET_ASSETS.XLM as Asset)
-  const [toAsset, setToAsset] = useState<Asset>(MAINNET_ASSETS.USDC as Asset)
+  const [fromAsset, setFromAsset] = useState<Asset>(ASSETS.XLM as Asset)
+  const [toAsset, setToAsset] = useState<Asset>(ASSETS.USDC as Asset)
   const [fromAmount, setFromAmount] = useState("")
   const [toAmount, setToAmount] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [quote, setQuote] = useState<any>(null)
   const [slippage, setSlippage] = useState("0.5")
 
-  // Keep selected assets in sync with wallet network (testnet vs mainnet)
-  useEffect(() => {
-    const currentAssets = getAssetsForNetwork(network)
-    const fromMatch = fromAsset.contractId === currentAssets.XLM.contractId || fromAsset.contractId === currentAssets.USDC.contractId
-    const toMatch = toAsset.contractId === currentAssets.XLM.contractId || toAsset.contractId === currentAssets.USDC.contractId
-    if (!fromMatch || !toMatch) {
-      setFromAsset(currentAssets.XLM)
-      setToAsset(currentAssets.USDC)
-      setQuote(null)
-    }
-  }, [network])
 
   // Swap the from/to assets
   const handleSwapAssets = () => {
@@ -116,8 +84,7 @@ export function SwapInterface() {
         const fromAssetData = { contractId: fromAsset.contractId }
         const toAssetData = { contractId: toAsset.contractId }
         
-        const network = normalizeNetwork(account.network)
-        const quoteResult = await getQuote(fromAssetData, toAssetData, rawAmount, network)
+        const quoteResult = await getQuote(fromAssetData, toAssetData, rawAmount, "mainnet")
         
         // Convert back from raw units to display units
         const expectedOutDisplay = (parseFloat(quoteResult.expectedOut) / Math.pow(10, toAsset.decimals)).toFixed(6)
@@ -151,13 +118,13 @@ export function SwapInterface() {
 
     try {
       setIsLoading(true)
-      const network = normalizeNetwork(account.network)
+      const network = "mainnet"
 
       // 1) Build unsigned transaction (server)
       const { xdr } = await buildSwap(quote, account.publicKey, network)
 
       // 2) Sign with Freighter – user approves in the wallet popup
-      const networkPassphrase = network === "testnet" ? Networks.TESTNET : Networks.PUBLIC
+      const networkPassphrase = Networks.PUBLIC
       const signResult = await signTransaction(xdr, { networkPassphrase })
       if (signResult.error) {
         if (signResult.error.message?.toLowerCase().includes("rejected") || signResult.error.message?.toLowerCase().includes("denied")) {
@@ -261,7 +228,7 @@ export function SwapInterface() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-zinc-950 border-zinc-800">
-                  {Object.values(assets).map((asset) => (
+                  {Object.values(ASSETS).map((asset) => (
                     <DropdownMenuItem
                       key={asset.symbol}
                       onClick={() => setFromAsset(asset)}
@@ -310,7 +277,7 @@ export function SwapInterface() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-zinc-950 border-zinc-800">
-                  {Object.values(assets).map((asset) => (
+                  {Object.values(ASSETS).map((asset) => (
                     <DropdownMenuItem
                       key={asset.symbol}
                       onClick={() => setToAsset(asset)}

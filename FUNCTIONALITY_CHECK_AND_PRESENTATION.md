@@ -29,7 +29,7 @@ Use this to verify each feature before the demo. Check off as you confirm.
 | 2.1 | CLI balance | `node dist/index.js balance <G...> [--network=testnet\|mainnet]`. Expect JSON with XLM + trust lines. | Build root first: `npm run build:root` (or full build) |
 | 2.2 | CLI pay | `node dist/index.js pay <secret> <G...> <amount> [--network] [--asset] [--issuer]`. Expect "Transaction submitted: <hash>". | Valid secret, destination, network |
 | 2.3 | CLI agent | `node dist/index.js agent [--api-key <key>]`. Interactive chat; ask "what's my balance for G...?" or "get a swap quote XLM to USDC 1". | GROQ_API_KEY or --api-key (OpenAI-compatible) |
-| 2.4–2.7 | Tools (check_balance, swap_asset, get_swap_quote, create_trustline) | Exercised through CLI agent when you ask balance/quote/swap/trustline. | Same as 2.3; SOROSWAP_API_KEY for swap |
+| 2.4–2.8 | Tools (check_balance, swap_asset, get_swap_quote, create_trustline, send_payment) | Exercised through CLI agent when you ask balance/quote/swap/trustline/send payment. | Same as 2.3; SOROSWAP_API_KEY for swap |
 | 2.8 | StellarClient | Used by CLI balance/pay and by agent tools. No direct test; implied by 2.1, 2.2. | — |
 
 **Summary:** Build root (`npm run build:root`), then run `balance`, `pay`, and `agent` from repo root. Agent needs an API key for the LLM.
@@ -44,6 +44,7 @@ Use this to verify each feature before the demo. Check off as you confirm.
 | 3.2 | Resources | MCP exposes resources (stellar://...); Cursor lists "3 resources". Optional: ask Claude to read a resource. | — |
 | 3.3 | get_stellar_contract | In **new** Cursor chat: "Use the Stellar DevKit MCP to get the SoroSwap mainnet contract ID." Reply should include contract ID and show tool use. | New chat (so tools are attached) |
 | 3.4 | get_sdk_snippet | In same or new chat: "Call get_sdk_snippet with operation swap and show me the code." Reply should include snippet. | — |
+| 3.5 | get_quote | With SOROSWAP_API_KEY set where MCP runs: "Get a swap quote for 1 XLM to USDC." Reply should show live quote. | SOROSWAP_API_KEY in MCP env |
 
 **Summary:** MCP works when Cursor uses the **local** build (not npx, due to published package shebang bug). New chat is required so the model gets the tool list. Tool descriptions are tuned so the model invokes them.
 
@@ -85,7 +86,7 @@ Use this to verify each feature before the demo. Check off as you confirm.
 | 6.6 | Protocols (in DevKit) | DevKit → Protocols tab. Cards: Swap SoroSwap, Phoenix, Aqua, Get quote, Send payment, x402 server/client. Click card → Code generator shows code. | — |
 | 6.7 | Code generator | DevKit → Code generator. Select operation; see snippet; Copy; "Try it" for Swap/Send opens /swap or /swap?tab=send. | — |
 | 6.8 | MCP tab | DevKit → MCP. Config snippet for Cursor; tool list; "How to show MCP working" with prompts. | — |
-| 6.9 | API routes | Swap: /api/swap/quote, /api/swap/build, /api/swap/submit. Send: /api/send/build, /api/send/submit. Balance: /api/balance. Validate: /api/v1/validate?appId=... | Backend running |
+| 6.9 | API routes | Swap: /api/swap/quote, /api/swap/build, /api/swap/submit. Send: /api/send/build, /api/send/submit. Balance: /api/balance. Validate: /api/v1/validate?appId=... (returns valid only if appId registered via DevKit). Projects: POST /api/v1/projects to register. | Backend running |
 
 **Summary:** Full UI works with `npm run dev:ui`. Swap/Send require Freighter; swap execute requires SOROSWAP_API_KEY. DevKit is self-contained (project creation is localStorage + validate route).
 

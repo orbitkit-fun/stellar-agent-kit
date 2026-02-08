@@ -38,46 +38,32 @@ export function Navbar() {
         isVisible ? "top-8 opacity-100" : "-top-24 opacity-0"
       }`}
     >
-      <div className="bg-black/60 backdrop-blur-[120px] rounded-full px-6 py-2.5 flex items-center justify-between gap-6 shadow-lg shadow-black/20 border border-white/10 w-full">
-        {/* Left: Logo + Docs, DevKit */}
-        <div className="hidden md:flex items-center gap-6">
+      <div className="bg-black/60 backdrop-blur-[120px] rounded-full px-6 py-2.5 flex items-center justify-between gap-4 min-w-0 w-full shadow-lg shadow-black/20 border border-white/10">
+        {/* Left: Logo */}
+        <div className="hidden sm:flex items-center min-w-0 shrink-0">
           <button
             type="button"
             onClick={() => scrollTo("hero")}
-            className="flex items-center text-xl font-semibold text-white hover:text-zinc-200 transition-colors duration-500 ease-out shrink-0"
-          >
-            Warly
-          </button>
-          <div className="h-4 w-px bg-white/10" aria-hidden />
-          <div className="flex items-center gap-1">
-            <Link
-              href="/docs"
-              className="px-3 py-2 text-sm text-zinc-400 hover:text-white transition-colors duration-500 ease-out"
-            >
-              Docs
-            </Link>
-            <Link
-              href="/devkit"
-              className="px-3 py-2 text-sm text-zinc-400 hover:text-white transition-colors duration-500 ease-out"
-            >
-              DevKit
-            </Link>
-          </div>
-        </div>
-
-        {/* Mobile: logo only on left */}
-        <div className="flex md:hidden items-center">
-          <button
-            type="button"
-            onClick={() => scrollTo("hero")}
-            className="text-lg font-semibold text-white hover:text-zinc-200 transition-colors duration-500 ease-out"
+            className="flex items-center text-xl font-semibold text-white hover:text-zinc-200 transition-colors duration-500 ease-out"
           >
             Warly
           </button>
         </div>
 
-        {/* Right: Capabilities, Swap, Wallet, CTA */}
-        <div className="hidden md:flex items-center gap-2">
+        {/* Center: Docs, DevKit, Capabilities, Demo */}
+        <div className="hidden sm:flex items-center justify-center gap-2 flex-1 min-w-0">
+          <Link
+            href="/docs"
+            className="px-3 py-2 text-sm text-zinc-400 hover:text-white transition-colors duration-500 ease-out"
+          >
+            Docs
+          </Link>
+          <Link
+            href="/devkit"
+            className="px-3 py-2 text-sm text-zinc-400 hover:text-white transition-colors duration-500 ease-out"
+          >
+            DevKit
+          </Link>
           <button
             type="button"
             onClick={() => scrollTo("capabilities")}
@@ -89,8 +75,12 @@ export function Navbar() {
             href="/swap"
             className="px-3 py-2 text-sm text-zinc-300 hover:text-white transition-colors duration-500 ease-out"
           >
-            Swap
+            Demo
           </Link>
+        </div>
+
+        {/* Right: Wallet, Get started */}
+        <div className="hidden sm:flex items-center gap-2 shrink-0">
           <WalletData />
           <a
             href="https://github.com/stellar/stellar-agent-kit"
@@ -102,8 +92,17 @@ export function Navbar() {
           </a>
         </div>
 
-        {/* Mobile Menu */}
-        <div className="flex md:hidden items-center justify-end flex-1 pr-4">
+        {/* Mobile: logo left, menu right */}
+        <div className="flex sm:hidden items-center">
+          <button
+            type="button"
+            onClick={() => scrollTo("hero")}
+            className="text-lg font-semibold text-white hover:text-zinc-200 transition-colors duration-500 ease-out"
+          >
+            Warly
+          </button>
+        </div>
+        <div className="flex sm:hidden items-center justify-end flex-1">
           <MobileMenu />
         </div>
       </div>

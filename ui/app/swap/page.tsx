@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useSearchParams } from "next/navigation"
+import { useEffect, useState, useCallback } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { SwapInterface } from "@/components/swap-interface"
 import { SendInterface } from "@/components/send-interface"
@@ -10,15 +10,33 @@ import { PageTransition } from "@/components/page-transition"
 import Script from "next/script"
 
 export default function SwapPage() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const tabFromUrl = searchParams.get("tab") === "send" ? "send" : "swap"
+  const [activeTab, setActiveTab] = useState<"swap" | "send">(tabFromUrl)
   const [scrollProgress, setScrollProgress] = useState(0)
+
+  // Keep URL in sync when tab changes (so Send is always reachable and visible)
+  useEffect(() => {
+    setActiveTab(tabFromUrl)
+  }, [tabFromUrl])
+
+  const onTabChange = useCallback(
+    (value: string) => {
+      const next = value === "send" ? "send" : "swap"
+      setActiveTab(next)
+      const params = new URLSearchParams(searchParams.toString())
+      if (next === "send") params.set("tab", "send")
+      else params.delete("tab")
+      router.replace(params.toString() ? `/swap?${params}` : "/swap", { scroll: false })
+    },
+    [router, searchParams]
+  )
 
   useEffect(() => {
     const handleScroll = () => {
       const scrollY = window.scrollY
       const viewportHeight = window.innerHeight
-      // Calculate progress from 0 to 1 over one viewport height
       const progress = Math.min(scrollY / viewportHeight, 1)
       setScrollProgress(progress)
     }
@@ -27,9 +45,8 @@ export default function SwapPage() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  // Calculate opacity and scale based on scroll
   const linesOpacity = 1 - scrollProgress
-  const linesScale = 1 - scrollProgress * 0.3 // Scale from 1 to 0.7
+  const linesScale = 1 - scrollProgress * 0.3
 
   return (
     <main className="relative min-h-screen bg-black text-white overflow-hidden">
@@ -42,7 +59,7 @@ export default function SwapPage() {
       <Navbar />
 
       <div
-        className="fixed inset-0 z-0 w-screen h-screen pointer-events-none transition-all duration-100"
+        className="fixed inset-0 z-0 w-screen h-screen pointer-events-none transition-[opacity,transform] duration-500 ease-out"
         style={{
           opacity: linesOpacity,
           transform: `scale(${linesScale})`,
@@ -127,7 +144,7 @@ export default function SwapPage() {
 
       {/* 3D Spline Viewer */}
       <div
-        className="fixed right-0 top-0 w-1/2 h-screen pointer-events-none z-10"
+        className="fixed right-0 top-0 w-1/2 h-screen pointer-events-none z-10 transition-[opacity,transform] duration-500 ease-out"
         style={{
           opacity: linesOpacity,
           transform: `scale(${linesScale})`,
@@ -148,7 +165,7 @@ export default function SwapPage() {
         <div className="max-w-md mx-auto w-full">
           {/* Header */}
           <div className="text-center mb-12 animate-fade-in">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-light mb-6 leading-[1] text-balance">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-light mb-6 leading-none text-balance">
               Swap & Send
             </h1>
             <p className="text-lg md:text-xl text-zinc-400 mb-8">
@@ -156,23 +173,39 @@ export default function SwapPage() {
             </p>
           </div>
 
-          {/* Swap / Send Tabs */}
+          {/* Swap / Send Tabs — both always visible; smooth transition */}
           <div className="animate-fade-in-up animation-delay-200">
-            <Tabs defaultValue={tabFromUrl} className="w-full" key={tabFromUrl}>
-              <TabsList className="grid w-full grid-cols-2 mb-6 bg-zinc-950 border border-zinc-800 p-1 rounded-xl">
-                <TabsTrigger value="swap" className="rounded-lg data-[state=active]:bg-[#5100fd] data-[state=active]:text-white">
+            <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6 bg-zinc-950 border border-zinc-800 p-1.5 rounded-xl transition-colors duration-300">
+                <TabsTrigger
+                  value="swap"
+                  className="rounded-lg py-2.5 text-sm font-medium transition-all duration-300 ease-out data-[state=inactive]:text-zinc-400 data-[state=inactive]:hover:text-zinc-300 data-[state=active]:bg-[#5100fd] data-[state=active]:text-white"
+                >
                   Swap
                 </TabsTrigger>
-                <TabsTrigger value="send" className="rounded-lg data-[state=active]:bg-[#5100fd] data-[state=active]:text-white">
+                <TabsTrigger
+                  value="send"
+                  className="rounded-lg py-2.5 text-sm font-medium transition-all duration-300 ease-out data-[state=inactive]:text-zinc-400 data-[state=inactive]:hover:text-zinc-300 data-[state=active]:bg-[#5100fd] data-[state=active]:text-white"
+                >
                   Send
                 </TabsTrigger>
               </TabsList>
-              <TabsContent value="swap">
-                <SwapInterface />
-              </TabsContent>
-              <TabsContent value="send">
-                <SendInterface />
-              </TabsContent>
+              <div className="relative min-h-[320px]">
+                <TabsContent
+                  value="swap"
+                  forceMount
+                  className="swap-send-tab-content relative z-10 data-[state=inactive]:z-0 data-[state=inactive]:pointer-events-none data-[state=inactive]:absolute data-[state=inactive]:inset-0 data-[state=inactive]:opacity-0 data-[state=active]:opacity-100 outline-none transition-opacity duration-300 ease-out"
+                >
+                  <SwapInterface />
+                </TabsContent>
+                <TabsContent
+                  value="send"
+                  forceMount
+                  className="swap-send-tab-content relative z-10 data-[state=inactive]:z-0 data-[state=inactive]:pointer-events-none data-[state=inactive]:absolute data-[state=inactive]:inset-0 data-[state=inactive]:opacity-0 data-[state=active]:opacity-100 outline-none transition-opacity duration-300 ease-out"
+                >
+                  <SendInterface />
+                </TabsContent>
+              </div>
             </Tabs>
           </div>
         </div>

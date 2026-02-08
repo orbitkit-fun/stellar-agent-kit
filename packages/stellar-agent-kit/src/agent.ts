@@ -6,8 +6,11 @@
 import { Keypair, Asset, TransactionBuilder, Operation, Networks, Horizon } from "@stellar/stellar-sdk";
 import { getNetworkConfig, type NetworkConfig } from "./config/networks.js";
 import { createDexClient, type DexAsset, type QuoteResult, type SwapResult } from "./dex/index.js";
+import { createReflectorOracle, type OracleAsset, type PriceData } from "./oracle/index.js";
+import { lendingSupply as blendSupply, lendingBorrow as blendBorrow, type LendingSupplyArgs, type LendingBorrowArgs, type LendingResult } from "./lending/index.js";
 
-export type StellarNetwork = "mainnet" | "testnet";
+/** This project is mainnet-only. */
+export type StellarNetwork = "mainnet";
 
 export class StellarAgentKit {
   public readonly keypair: Keypair;
@@ -16,11 +19,15 @@ export class StellarAgentKit {
   private _initialized = false;
   private _dex: ReturnType<typeof createDexClient> | null = null;
   private _horizon: Horizon.Server | null = null;
+  private _oracle: ReturnType<typeof createReflectorOracle> | null = null;
 
-  constructor(secretKey: string, network: StellarNetwork) {
+  constructor(secretKey: string, network: StellarNetwork = "mainnet") {
+    if (network !== "mainnet") {
+      throw new Error("This project is mainnet-only. Use network: 'mainnet'.");
+    }
     this.keypair = Keypair.fromSecret(secretKey.trim());
-    this.network = network;
-    this.config = getNetworkConfig(network);
+    this.network = "mainnet";
+    this.config = getNetworkConfig();
   }
 
   /**
@@ -30,6 +37,7 @@ export class StellarAgentKit {
   async initialize(): Promise<this> {
     this._horizon = new Horizon.Server(this.config.horizonUrl);
     this._dex = createDexClient(this.config, process.env.SOROSWAP_API_KEY);
+    this._oracle = createReflectorOracle({ networkConfig: this.config });
     this._initialized = true;
     return this;
   }
@@ -92,8 +100,7 @@ export class StellarAgentKit {
     this.ensureInitialized();
     if (!this._horizon) throw new Error("Horizon not initialized");
 
-    const networkPassphrase =
-      this.network === "testnet" ? Networks.TESTNET : Networks.PUBLIC;
+    const networkPassphrase = Networks.PUBLIC;
     const sourceAccount = await this._horizon.loadAccount(this.keypair.publicKey());
 
     const asset =
@@ -114,10 +121,33 @@ export class StellarAgentKit {
     return { hash: result.hash };
   }
 
-  // ─── Placeholders for lending / oracle / cross-chain (plug later) ────────────
+  // ─── Oracle (Reflector SEP-40) ─────────────────────────────────────────────
 
-  // async lendingSupply(asset: DexAsset, amount: string): Promise<{ hash: string }> { ... }
-  // async lendingBorrow(asset: DexAsset, amount: string): Promise<{ hash: string }> { ... }
-  // async getPrice(assetOrFeedId: string): Promise<{ price: string }> { ... }
-  // async crossChainSwap(...): Promise<SwapResult> { ... }
+  /**
+   * Get latest price for an asset from Reflector oracle.
+   * @param asset - { contractId: "C..." } for on-chain token or { symbol: "XLM" } for ticker
+   */
+  async getPrice(asset: OracleAsset): Promise<PriceData> {
+    this.ensureInitialized();
+    if (!this._oracle) throw new Error("Oracle not initialized");
+    return this._oracle.lastprice(asset);
+  }
+
+  // ─── Lending (Blend) ───────────────────────────────────────────────────────
+
+  /**
+   * Supply (deposit) an asset to a Blend pool.
+   */
+  async lendingSupply(args: LendingSupplyArgs): Promise<LendingResult> {
+    this.ensureInitialized();
+    return blendSupply(this.config, this.keypair.secret(), args);
+  }
+
+  /**
+   * Borrow an asset from a Blend pool.
+   */
+  async lendingBorrow(args: LendingBorrowArgs): Promise<LendingResult> {
+    this.ensureInitialized();
+    return blendBorrow(this.config, this.keypair.secret(), args);
+  }
 }

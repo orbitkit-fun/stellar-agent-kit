@@ -2,14 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { TransactionBuilder, Networks, Horizon } from "@stellar/stellar-sdk";
 import { getNetworkConfig } from "@/lib/agent-kit/config/networks";
 
-function normalizeNetwork(name: string): "testnet" | "mainnet" {
-  const n = name?.toLowerCase().trim() ?? "";
-  return n === "testnet" ? "testnet" : "mainnet";
-}
-
 export async function POST(request: NextRequest) {
   try {
-    const { signedXdr, network } = await request.json();
+    const { signedXdr } = await request.json();
 
     if (!signedXdr) {
       return NextResponse.json(
@@ -18,11 +13,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const networkName = normalizeNetwork(network ?? "mainnet");
-    const config = getNetworkConfig(networkName);
+    const config = getNetworkConfig();
     const horizon = new Horizon.Server(config.horizonUrl);
-    const networkPassphrase =
-      networkName === "testnet" ? Networks.TESTNET : Networks.PUBLIC;
+    const networkPassphrase = Networks.PUBLIC;
 
     const tx = TransactionBuilder.fromXDR(signedXdr, networkPassphrase);
     const result = await horizon.submitTransaction(tx);

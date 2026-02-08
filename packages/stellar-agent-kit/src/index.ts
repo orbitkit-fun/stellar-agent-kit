@@ -1,7 +1,6 @@
 export { StellarAgentKit, type StellarNetwork } from "./agent.js";
 export { getNetworkConfig, networks, type NetworkConfig, type NetworkName } from "./config/networks.js";
 export {
-  TESTNET_ASSETS,
   MAINNET_ASSETS,
   SOROSWAP_AGGREGATOR,
   type StellarAsset,
@@ -13,3 +12,21 @@ export {
   type QuoteResult,
   type SwapResult,
 } from "./dex/index.js";
+export {
+  createReflectorOracle,
+  REFLECTOR_ORACLE,
+  BAND_ORACLE,
+  type ReflectorOracle,
+  type ReflectorOracleConfig,
+  type OracleAsset,
+  type PriceData,
+} from "./oracle/index.js";
+export {
+  lendingSupply,
+  lendingBorrow,
+  BLEND_POOLS,
+  BLEND_POOLS_MAINNET,
+  type LendingSupplyArgs,
+  type LendingBorrowArgs,
+  type LendingResult,
+} from "./lending/index.js";

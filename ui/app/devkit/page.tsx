@@ -35,7 +35,7 @@ const PROTOCOLS = [
   {
     id: "swap-soroswap",
     title: "Swap on SoroSwap",
-    tags: ["DEX", "Mainnet", "Testnet"],
+    tags: ["DEX", "Mainnet"],
     description: "Get quote and execute swap via SoroSwap aggregator. Best route may use SoroSwap, Phoenix, or Aqua liquidity.",
     codeKey: "swap",
     tryItHref: "/swap",
@@ -43,7 +43,7 @@ const PROTOCOLS = [
   {
     id: "swap-phoenix",
     title: "Swap via Phoenix",
-    tags: ["DEX", "Mainnet", "Testnet"],
+    tags: ["DEX", "Mainnet"],
     description: "Phoenix DEX liquidity is included in the SoroSwap aggregator. Same StellarAgentKit code; the API returns the best route across SoroSwap, Phoenix, and Aqua.",
     codeKey: "swap",
     tryItHref: "/swap",
@@ -51,7 +51,7 @@ const PROTOCOLS = [
   {
     id: "swap-aqua",
     title: "Swap via Aqua",
-    tags: ["DEX", "AMM", "Mainnet", "Testnet"],
+    tags: ["DEX", "AMM", "Mainnet"],
     description: "Aqua (Aquarius) AMM liquidity is included in the SoroSwap aggregator. Same StellarAgentKit code; use dexGetQuote + dexSwap for the best price across all protocols.",
     codeKey: "swap",
     tryItHref: "/swap",
@@ -59,7 +59,7 @@ const PROTOCOLS = [
   {
     id: "get-quote",
     title: "Get swap quote",
-    tags: ["DEX", "Mainnet", "Testnet"],
+    tags: ["DEX", "Mainnet"],
     description: "Get a quote for swapping tokens without executing.",
     codeKey: "quote",
     tryItHref: "/swap",
@@ -67,7 +67,7 @@ const PROTOCOLS = [
   {
     id: "send-payment",
     title: "Send payment",
-    tags: ["Payments", "Mainnet", "Testnet"],
+    tags: ["Payments", "Mainnet"],
     description: "Send XLM or custom asset to a destination address.",
     codeKey: "sendPayment",
     tryItHref: "/swap?tab=send",
@@ -91,7 +91,7 @@ const PROTOCOLS = [
   {
     id: "one-shot-swap",
     title: "One-shot swap (dexSwapExactIn)",
-    tags: ["DEX", "Mainnet", "Testnet"],
+    tags: ["DEX", "Mainnet"],
     description: "Quote and execute in one call. Same as get quote + swap but a single method.",
     codeKey: "oneShotSwap",
     tryItHref: "/swap",
@@ -99,10 +99,34 @@ const PROTOCOLS = [
   {
     id: "full-setup",
     title: "Full setup example",
-    tags: ["Setup", "Mainnet", "Testnet"],
+    tags: ["Setup", "Mainnet"],
     description: "Complete flow: initialize agent, get quote, execute swap. Copy-paste ready.",
     codeKey: "fullSetup",
     tryItHref: "/swap",
+  },
+  {
+    id: "oracle-reflector",
+    title: "Get price (Reflector oracle)",
+    tags: ["Oracle", "Mainnet"],
+    description: "Fetch latest asset price from Reflector (SEP-40). Use contract ID for on-chain tokens or symbol (e.g. XLM, BTC) for ticker feeds.",
+    codeKey: "getPrice",
+    tryItHref: null,
+  },
+  {
+    id: "lending-blend-supply",
+    title: "Lending: supply (Blend)",
+    tags: ["Lending", "Mainnet"],
+    description: "Supply (deposit) an asset to a Blend pool as collateral. Uses Blend Protocol on Stellar.",
+    codeKey: "lendingSupply",
+    tryItHref: null,
+  },
+  {
+    id: "lending-blend-borrow",
+    title: "Lending: borrow (Blend)",
+    tags: ["Lending", "Mainnet"],
+    description: "Borrow an asset from a Blend pool. Requires sufficient collateral in the pool.",
+    codeKey: "lendingBorrow",
+    tryItHref: null,
   },
 ]
 
@@ -141,7 +165,7 @@ console.log("Quote:", quote);`,
     filename: "send-payment.ts",
     code: `import { StellarAgentKit } from "stellar-agent-kit";
 
-const agent = new StellarAgentKit(process.env.SECRET_KEY!, "testnet");
+const agent = new StellarAgentKit(process.env.SECRET_KEY!, "mainnet");
 await agent.initialize();
 
 // Send 10 XLM to destination
@@ -161,7 +185,7 @@ console.log("Payment tx hash:", result.hash);
 app.use("/api/premium", x402({
   price: "1",
   assetCode: "XLM",
-  network: "testnet",
+  network: "mainnet",
   destination: "G...",
   memo: "premium",
 }));
@@ -209,6 +233,48 @@ const quote = await agent.dexGetQuote(
 const result = await agent.dexSwap(quote);
 console.log("Swap tx hash:", result.hash);`,
   },
+  getPrice: {
+    filename: "get-price.ts",
+    code: `import { StellarAgentKit, MAINNET_ASSETS } from "stellar-agent-kit";
+
+const agent = new StellarAgentKit(process.env.SECRET_KEY!, "mainnet");
+await agent.initialize();
+
+// By on-chain token contract ID
+const priceData = await agent.getPrice({ contractId: MAINNET_ASSETS.XLM.contractId });
+console.log("Price (raw):", priceData.price, "decimals:", priceData.decimals, "timestamp:", priceData.timestamp);
+
+// By ticker symbol (Reflector CEX/DEX or fiat feed)
+// const btc = await agent.getPrice({ symbol: "BTC" });`,
+  },
+  lendingSupply: {
+    filename: "lending-supply.ts",
+    code: `import { StellarAgentKit, MAINNET_ASSETS, BLEND_POOLS } from "stellar-agent-kit";
+
+const agent = new StellarAgentKit(process.env.SECRET_KEY!, "mainnet");
+await agent.initialize();
+
+const result = await agent.lendingSupply({
+  poolId: BLEND_POOLS.mainnet,
+  assetContractId: MAINNET_ASSETS.USDC.contractId,
+  amount: "1000000", // 1 USDC (6 decimals) in smallest units
+});
+console.log("Supply tx hash:", result.hash);`,
+  },
+  lendingBorrow: {
+    filename: "lending-borrow.ts",
+    code: `import { StellarAgentKit, MAINNET_ASSETS, BLEND_POOLS } from "stellar-agent-kit";
+
+const agent = new StellarAgentKit(process.env.SECRET_KEY!, "mainnet");
+await agent.initialize();
+
+const result = await agent.lendingBorrow({
+  poolId: BLEND_POOLS.mainnet,
+  assetContractId: MAINNET_ASSETS.USDC.contractId,
+  amount: "500000", // 0.5 USDC in smallest units
+});
+console.log("Borrow tx hash:", result.hash);`,
+  },
 }
 
 function generateAppId(): string {
@@ -236,6 +302,11 @@ export default function DevKitPage() {
         const p = JSON.parse(raw) as DevKitProject
         setProject(p)
         setPayoutInput(p.payoutWallet)
+        fetch("/api/v1/projects", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: p.name, appId: p.appId, payoutWallet: p.payoutWallet }),
+        }).catch(() => {})
       }
     } catch {
       setProject(null)
@@ -246,16 +317,21 @@ export default function DevKitPage() {
     loadProject()
   }, [loadProject])
 
-  const createProject = () => {
+  const createProject = async () => {
     const name = projectNameInput.trim() || "My Project"
     const appId = generateAppId()
-    const payoutWallet = "GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+    const payoutWallet = ""
     const p: DevKitProject = { name, appId, payoutWallet }
     setProject(p)
-    setPayoutInput(payoutWallet)
+    setPayoutInput("")
     setProjectNameInput("")
     try {
       localStorage.setItem(PROJECT_STORAGE_KEY, JSON.stringify(p))
+      await fetch("/api/v1/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, appId, payoutWallet }),
+      })
     } catch {}
   }
 
@@ -440,6 +516,7 @@ export default function DevKitPage() {
                         <Input
                           value={payoutInput}
                           onChange={(e) => setPayoutInput(e.target.value)}
+                          placeholder="Enter your Stellar address (G...)"
                           className="bg-black/50 border-zinc-700 text-white font-mono text-sm"
                         />
                         <Button size="sm" onClick={savePayoutWallet} className="shrink-0">
@@ -449,12 +526,13 @@ export default function DevKitPage() {
                     ) : (
                       <div className="flex items-center gap-2">
                         <code className="flex-1 truncate rounded-lg bg-black/50 px-3 py-2 text-sm font-mono text-zinc-300">
-                          {project.payoutWallet}
+                          {project.payoutWallet || "Not set — click Edit to add"}
                         </code>
                         <button
                           type="button"
                           onClick={copyWallet}
-                          className="p-2 rounded-lg border border-zinc-700 text-zinc-400 hover:text-white hover:bg-white/5"
+                          disabled={!project?.payoutWallet}
+                          className="p-2 rounded-lg border border-zinc-700 text-zinc-400 hover:text-white hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {copiedWallet ? <Check className="h-4 w-4" /> : <Wallet className="h-4 w-4" />}
                         </button>
@@ -478,34 +556,20 @@ export default function DevKitPage() {
               )}
             </TabsContent>
 
-            {/* ─── Protocols: enabled protocols with tags ────────────────────── */}
+            {/* ─── Protocols: name-only cards, click opens Code generator ──────── */}
             <TabsContent value="protocols" className="mt-8">
               <p className="text-zinc-400 mb-6">
-                DEX swaps use the SoroSwap aggregator: one SDK flow (<code className="rounded bg-zinc-800 px-1">dexGetQuote</code> + <code className="rounded bg-zinc-800 px-1">dexSwap</code>) gets the best route across SoroSwap, Phoenix, and Aqua. Click a card to open its code in Code generator.
+                Click a protocol to open its code in Code generator.
               </p>
-              <ul className="grid gap-4 sm:grid-cols-2">
+              <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {PROTOCOLS.map((proto) => (
                   <li key={proto.id}>
                     <button
                       type="button"
                       onClick={() => setCodeGenKey(proto.codeKey)}
-                      className="w-full text-left rounded-xl border border-zinc-800 bg-zinc-950/50 p-5 hover:border-[#5100fd]/50 hover:bg-zinc-900/50 transition-colors"
+                      className="w-full text-left rounded-xl border border-zinc-800 bg-zinc-950/50 py-4 px-4 hover:border-[#5100fd]/50 hover:bg-zinc-900/50 transition-colors"
                     >
-                      <h3 className="font-medium text-white">{proto.title}</h3>
-                      <div className="flex flex-wrap gap-1.5 mt-2">
-                        {proto.tags.map((tag) => (
-                          <span
-                            key={tag}
-                            className="inline-block rounded-md bg-zinc-800/80 px-2 py-0.5 text-xs text-zinc-400"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                      <p className="mt-2 text-sm text-zinc-500">{proto.description}</p>
-                      <span className="mt-2 inline-flex items-center gap-1 text-xs text-[#a78bfa]">
-                        View code <Code className="h-3 w-3" />
-                      </span>
+                      <span className="font-medium text-white">{proto.title}</span>
                     </button>
                   </li>
                 ))}
@@ -614,7 +678,7 @@ npm install stellar-devkit-mcp
                   <li className="rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
                     <p className="font-mono text-sm text-[#a78bfa]">get_stellar_contract</p>
                     <p className="text-sm text-zinc-500 mt-1">
-                      Get Soroban contract ID for a protocol (e.g. soroswap testnet/mainnet).
+                      Get Soroban contract ID for a protocol (e.g. soroswap mainnet).
                     </p>
                   </li>
                   <li className="rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
