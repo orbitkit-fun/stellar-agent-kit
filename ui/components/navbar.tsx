@@ -44,7 +44,7 @@ export function Navbar() {
           <button
             type="button"
             onClick={() => scrollTo("hero")}
-            className="flex items-center text-xl font-semibold text-white hover:text-zinc-200 transition-colors shrink-0"
+            className="flex items-center text-xl font-semibold text-white hover:text-zinc-200 transition-colors duration-500 ease-out shrink-0"
           >
             Warly
           </button>
@@ -52,13 +52,13 @@ export function Navbar() {
           <div className="flex items-center gap-1">
             <Link
               href="/docs"
-              className="px-3 py-2 text-sm text-zinc-400 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+              className="px-3 py-2 text-sm text-zinc-400 hover:text-white transition-colors duration-500 ease-out"
             >
               Docs
             </Link>
             <Link
               href="/devkit"
-              className="px-3 py-2 text-sm text-zinc-400 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+              className="px-3 py-2 text-sm text-zinc-400 hover:text-white transition-colors duration-500 ease-out"
             >
               DevKit
             </Link>
@@ -70,7 +70,7 @@ export function Navbar() {
           <button
             type="button"
             onClick={() => scrollTo("hero")}
-            className="text-lg font-semibold text-white hover:text-zinc-300 transition-colors"
+            className="text-lg font-semibold text-white hover:text-zinc-200 transition-colors duration-500 ease-out"
           >
             Warly
           </button>
@@ -81,13 +81,13 @@ export function Navbar() {
           <button
             type="button"
             onClick={() => scrollTo("capabilities")}
-            className="px-3 py-2 text-sm text-zinc-300 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+            className="px-3 py-2 text-sm text-zinc-300 hover:text-white transition-colors duration-500 ease-out"
           >
             Capabilities
           </button>
           <Link
             href="/swap"
-            className="px-3 py-2 text-sm text-zinc-300 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+            className="px-3 py-2 text-sm text-zinc-300 hover:text-white transition-colors duration-500 ease-out"
           >
             Swap
           </Link>
@@ -96,7 +96,7 @@ export function Navbar() {
             href="https://github.com/stellar/stellar-agent-kit"
             target="_blank"
             rel="noopener noreferrer"
-            className="ml-2 px-4 py-2 rounded-full border border-[#5100fd] bg-[#5100fd]/40 text-white text-sm font-medium hover:bg-[#5100fd]/60 transition-colors"
+            className="ml-2 px-4 py-2 rounded-full border border-[#5100fd] bg-[#5100fd]/40 text-white text-sm font-medium hover:text-white hover:border-[#5100fd] hover:bg-[#5100fd]/60 transition-all duration-500 ease-out"
           >
             Get started
           </a>

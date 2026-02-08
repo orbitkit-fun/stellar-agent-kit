@@ -34,14 +34,14 @@ export function MobileMenu() {
           <button
             type="button"
             onClick={() => scrollTo("hero")}
-            className="text-left py-3 px-3 text-base text-white hover:text-zinc-200 hover:bg-white/5 rounded-lg transition-colors"
+            className="text-left py-3 px-3 text-base text-white hover:text-zinc-200 transition-colors duration-500 ease-out"
           >
             Home
           </button>
           <button
             type="button"
             onClick={() => scrollTo("capabilities")}
-            className="text-left py-3 px-3 text-base text-zinc-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+            className="text-left py-3 px-3 text-base text-zinc-300 hover:text-white transition-colors duration-500 ease-out"
           >
             Capabilities
           </button>
@@ -51,21 +51,21 @@ export function MobileMenu() {
           <Link
             href="/docs"
             onClick={() => setOpen(false)}
-            className="text-left py-3 px-3 text-base text-zinc-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+            className="text-left py-3 px-3 text-base text-zinc-400 hover:text-white transition-colors duration-500 ease-out"
           >
             Docs
           </Link>
           <Link
             href="/devkit"
             onClick={() => setOpen(false)}
-            className="text-left py-3 px-3 text-base text-zinc-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+            className="text-left py-3 px-3 text-base text-zinc-400 hover:text-white transition-colors duration-500 ease-out"
           >
             DevKit
           </Link>
           <Link
             href="/swap"
             onClick={() => setOpen(false)}
-            className="text-left py-3 px-3 text-base text-zinc-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+            className="text-left py-3 px-3 text-base text-zinc-300 hover:text-white transition-colors duration-500 ease-out"
           >
             Swap
           </Link>
@@ -75,7 +75,7 @@ export function MobileMenu() {
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => setOpen(false)}
-              className="block text-center py-3 rounded-lg border border-[#5100fd] bg-[#5100fd]/30 text-[#a78bfa] font-medium hover:bg-[#5100fd]/50 transition-colors"
+              className="block text-center py-3 rounded-lg border border-[#5100fd] bg-[#5100fd]/30 text-[#a78bfa] font-medium hover:bg-[#5100fd]/50 hover:text-white transition-all duration-500 ease-out"
             >
               Get started
             </a>
