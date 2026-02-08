@@ -9,6 +9,8 @@ export const mainnet = {
 
 export type NetworkConfig = typeof mainnet;
 
+export type NetworkName = "mainnet";
+
 export function getNetworkConfig(_name?: string): NetworkConfig {
   return mainnet;
 }

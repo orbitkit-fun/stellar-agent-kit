@@ -15,7 +15,7 @@ function toOpenAITools() {
                     type: "object",
                     properties: {
                         address: { type: "string", description: "Stellar address" },
-                        network: { type: "string", enum: ["testnet", "mainnet"] },
+                        network: { type: "string", enum: ["mainnet"] },
                     },
                     required: ["address"],
                 },
@@ -50,7 +50,7 @@ function toOpenAITools() {
                     properties: {
                         address: { type: "string", description: "Stellar address" },
                         assetCode: { type: "string", description: "Asset code (USDC)" },
-                        network: { type: "string", enum: ["testnet", "mainnet"] },
+                        network: { type: "string", enum: ["mainnet"] },
                         privateKey: { type: "string", description: "Complete 56-character secret key starting with S" },
                     },
                     required: ["address", "assetCode", "network", "privateKey"],
@@ -68,7 +68,7 @@ function toOpenAITools() {
                         fromAsset: { type: "string", description: "From asset (XLM or USDC)" },
                         toAsset: { type: "string", description: "To asset (XLM or USDC)" },
                         amount: { type: "string", description: "Amount to swap" },
-                        network: { type: "string", enum: ["testnet", "mainnet"] },
+                        network: { type: "string", enum: ["mainnet"] },
                     },
                     required: ["fromAsset", "toAsset", "amount", "network"],
                 },

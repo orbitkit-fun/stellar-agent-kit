@@ -161,8 +161,8 @@ export default function SwapPage() {
 
       {/* Swap Content */}
       <PageTransition>
-      <div className="relative z-20 container mx-auto px-6 lg:px-12 pt-24 pb-32 min-h-screen flex flex-col justify-center">
-        <div className="max-w-md mx-auto w-full">
+      <div className="relative z-20 container mx-auto px-6 lg:px-12 pt-24 pb-32 min-h-screen flex flex-col justify-center overflow-x-hidden">
+        <div className="max-w-md mx-auto w-full min-w-0">
           {/* Header */}
           <div className="text-center mb-12 animate-fade-in">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-light mb-6 leading-none text-balance">
@@ -190,20 +190,24 @@ export default function SwapPage() {
                   Send
                 </TabsTrigger>
               </TabsList>
-              <div className="relative min-h-[320px]">
+              <div className="relative min-h-[320px] w-full overflow-hidden">
                 <TabsContent
                   value="swap"
                   forceMount
-                  className="swap-send-tab-content relative z-10 data-[state=inactive]:z-0 data-[state=inactive]:pointer-events-none data-[state=inactive]:absolute data-[state=inactive]:inset-0 data-[state=inactive]:opacity-0 data-[state=active]:opacity-100 outline-none transition-opacity duration-300 ease-out"
+                  className="swap-send-tab-content w-full relative z-10 data-[state=inactive]:z-0 data-[state=inactive]:pointer-events-none data-[state=inactive]:absolute data-[state=inactive]:inset-0 data-[state=inactive]:opacity-0 data-[state=active]:opacity-100 outline-none transition-opacity duration-300 ease-out"
                 >
-                  <SwapInterface />
+                  <div className="w-full min-w-0">
+                    <SwapInterface />
+                  </div>
                 </TabsContent>
                 <TabsContent
                   value="send"
                   forceMount
-                  className="swap-send-tab-content relative z-10 data-[state=inactive]:z-0 data-[state=inactive]:pointer-events-none data-[state=inactive]:absolute data-[state=inactive]:inset-0 data-[state=inactive]:opacity-0 data-[state=active]:opacity-100 outline-none transition-opacity duration-300 ease-out"
+                  className="swap-send-tab-content w-full relative z-10 data-[state=inactive]:z-0 data-[state=inactive]:pointer-events-none data-[state=inactive]:absolute data-[state=inactive]:inset-0 data-[state=inactive]:opacity-0 data-[state=active]:opacity-100 outline-none transition-opacity duration-300 ease-out"
                 >
-                  <SendInterface />
+                  <div className="w-full min-w-0">
+                    <SendInterface />
+                  </div>
                 </TabsContent>
               </div>
             </Tabs>

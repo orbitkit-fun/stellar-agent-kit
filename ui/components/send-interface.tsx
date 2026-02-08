@@ -101,9 +101,9 @@ export function SendInterface() {
 
   if (!account) {
     return (
-      <div className="relative rounded-2xl border border-zinc-800 p-3">
+      <div className="relative w-full min-w-0 overflow-hidden rounded-2xl border border-zinc-800 p-3">
         <GlowingEffect blur={0} borderWidth={2} spread={80} glow={true} disabled={false} proximity={64} inactiveZone={0.01} />
-        <div className="relative bg-(#0a0a0a) rounded-xl p-8 text-center">
+        <div className="relative bg-(#0a0a0a) rounded-xl p-8 text-center overflow-hidden">
           <h3 className="text-2xl font-light mb-4">Connect Wallet</h3>
           <p className="text-zinc-400 leading-relaxed mb-6">
             Connect your wallet to send XLM or USDC on Stellar.
@@ -115,9 +115,9 @@ export function SendInterface() {
   }
 
   return (
-    <div className="relative rounded-2xl border border-zinc-800 p-3">
+    <div className="relative w-full min-w-0 overflow-hidden rounded-2xl border border-zinc-800 p-3">
       <GlowingEffect blur={0} borderWidth={2} spread={80} glow={true} disabled={false} proximity={64} inactiveZone={0.01} />
-      <div className="relative bg-(#0a0a0a) rounded-xl p-8">
+      <div className="relative bg-(#0a0a0a) rounded-xl p-8 overflow-hidden">
         <div className="space-y-3 mb-6">
           <span className="text-zinc-400 text-sm">Recipient (G...)</span>
           <Input
@@ -129,17 +129,17 @@ export function SendInterface() {
         </div>
         <div className="space-y-3 mb-6">
           <span className="text-zinc-400 text-sm">Amount</span>
-          <div className="flex gap-2">
+          <div className="flex gap-2 min-w-0">
             <Input
               type="number"
               placeholder="0.0"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="bg-zinc-950 border-zinc-800 text-white placeholder:text-zinc-500 flex-1"
+              className="bg-zinc-950 border-zinc-800 text-white placeholder:text-zinc-500 flex-1 min-w-0"
             />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2 text-white hover:bg-zinc-800 px-3 py-2 h-auto rounded-xl border border-zinc-800">
+                <Button variant="ghost" className="flex items-center gap-2 text-white hover:bg-zinc-800 px-3 py-2 h-auto rounded-xl border border-zinc-800 shrink-0">
                   {asset.symbol}
                   <ChevronDown className="h-4 w-4" />
                 </Button>

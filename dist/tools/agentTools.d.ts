@@ -5,13 +5,13 @@ export declare const tools: ({
     description: string;
     parameters: z.ZodObject<{
         address: z.ZodString;
-        network: z.ZodDefault<z.ZodOptional<z.ZodEnum<["testnet", "mainnet"]>>>;
+        network: z.ZodDefault<z.ZodOptional<z.ZodLiteral<"mainnet">>>;
     }, "strip", z.ZodTypeAny, {
         address: string;
-        network: "testnet" | "mainnet";
+        network: "mainnet";
     }, {
         address: string;
-        network?: "testnet" | "mainnet" | undefined;
+        network?: "mainnet" | undefined;
     }>;
     execute: ({ address, network, }: {
         address: string;
@@ -27,11 +27,11 @@ export declare const tools: ({
         toAsset: z.ZodString;
         amount: z.ZodString;
         address: z.ZodString;
-        network: z.ZodDefault<z.ZodEnum<["testnet", "mainnet"]>>;
+        network: z.ZodDefault<z.ZodLiteral<"mainnet">>;
         privateKey: z.ZodOptional<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
         address: string;
-        network: "testnet" | "mainnet";
+        network: "mainnet";
         fromAsset: string;
         toAsset: string;
         amount: string;
@@ -41,7 +41,7 @@ export declare const tools: ({
         fromAsset: string;
         toAsset: string;
         amount: string;
-        network?: "testnet" | "mainnet" | undefined;
+        network?: "mainnet" | undefined;
         privateKey?: string | undefined;
     }>;
     execute: ({ fromAsset, toAsset, amount, address, network, privateKey, }: {
@@ -49,7 +49,7 @@ export declare const tools: ({
         toAsset: string;
         amount: string;
         address: string;
-        network: "testnet" | "mainnet";
+        network: "mainnet";
         privateKey?: string;
     }) => Promise<{
         success: false;
@@ -70,18 +70,18 @@ export declare const tools: ({
     parameters: z.ZodObject<{
         address: z.ZodString;
         assetCode: z.ZodString;
-        network: z.ZodDefault<z.ZodEnum<["testnet", "mainnet"]>>;
+        network: z.ZodDefault<z.ZodLiteral<"mainnet">>;
         privateKey: z.ZodString;
     }, "strip", z.ZodTypeAny, {
         address: string;
-        network: "testnet" | "mainnet";
+        network: "mainnet";
         privateKey: string;
         assetCode: string;
     }, {
         address: string;
         privateKey: string;
         assetCode: string;
-        network?: "testnet" | "mainnet" | undefined;
+        network?: "mainnet" | undefined;
     }>;
     execute: ({ address, assetCode, network, privateKey, }: {
         address: string;
@@ -103,12 +103,49 @@ export declare const tools: ({
     name: string;
     description: string;
     parameters: z.ZodObject<{
+        privateKey: z.ZodString;
+        destination: z.ZodString;
+        amount: z.ZodString;
+        assetCode: z.ZodOptional<z.ZodString>;
+        assetIssuer: z.ZodOptional<z.ZodString>;
+        network: z.ZodDefault<z.ZodOptional<z.ZodLiteral<"mainnet">>>;
+    }, "strip", z.ZodTypeAny, {
+        network: "mainnet";
+        amount: string;
+        privateKey: string;
+        destination: string;
+        assetCode?: string | undefined;
+        assetIssuer?: string | undefined;
+    }, {
+        amount: string;
+        privateKey: string;
+        destination: string;
+        network?: "mainnet" | undefined;
+        assetCode?: string | undefined;
+        assetIssuer?: string | undefined;
+    }>;
+    execute: ({ privateKey, destination, amount, assetCode, assetIssuer, network, }: {
+        privateKey: string;
+        destination: string;
+        amount: string;
+        assetCode?: string;
+        assetIssuer?: string;
+        network?: "mainnet";
+    }) => Promise<{
+        success: true;
+        txHash: string;
+        message: string;
+    }>;
+} | {
+    name: string;
+    description: string;
+    parameters: z.ZodObject<{
         fromAsset: z.ZodString;
         toAsset: z.ZodString;
         amount: z.ZodString;
-        network: z.ZodDefault<z.ZodEnum<["testnet", "mainnet"]>>;
+        network: z.ZodDefault<z.ZodLiteral<"mainnet">>;
     }, "strip", z.ZodTypeAny, {
-        network: "testnet" | "mainnet";
+        network: "mainnet";
         fromAsset: string;
         toAsset: string;
         amount: string;
@@ -116,13 +153,13 @@ export declare const tools: ({
         fromAsset: string;
         toAsset: string;
         amount: string;
-        network?: "testnet" | "mainnet" | undefined;
+        network?: "mainnet" | undefined;
     }>;
     execute: ({ fromAsset, toAsset, amount, network, }: {
         fromAsset: string;
         toAsset: string;
         amount: string;
-        network: "testnet" | "mainnet";
+        network: "mainnet";
     }) => Promise<{
         success: true;
         quote: {

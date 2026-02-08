@@ -10,7 +10,7 @@ export declare class NativeAmmClient {
     private networkConfig;
     constructor(networkConfig: NetworkConfig);
     getQuote(fromAssetStr: string, toAssetStr: string, amount: string): Promise<QuoteResponse>;
-    executeSwap(privateKey: string, quote: QuoteResponse, network: string): Promise<{
+    executeSwap(_privateKey: string, _quote: QuoteResponse, _network: string): Promise<{
         hash: string;
         status: string;
     }>;
