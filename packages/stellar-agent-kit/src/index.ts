@@ -30,3 +30,4 @@ export {
   type LendingBorrowArgs,
   type LendingResult,
 } from "./lending/index.js";
+export { FXDAO_MAINNET, ALLBRIDGE_CORE_STELLAR_DOCS } from "./config/protocols.js";

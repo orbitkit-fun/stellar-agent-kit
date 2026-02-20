@@ -19,7 +19,28 @@
       "static/chunks/618f8807-856469c17aca91ac.js",
       "static/chunks/364-acf740e6bad3c1c7.js",
       "static/chunks/main-app-7292d59f805fb8b7.js",
-      "static/chunks/app/page-a50ff053a2c5d79b.js"
+      "static/chunks/app/page-35451bb8053972c8.js"
+    ],
+    "/packages/stellar-agent-kit/page": [
+      "static/chunks/webpack-100b9e646d9c912e.js",
+      "static/chunks/618f8807-856469c17aca91ac.js",
+      "static/chunks/364-acf740e6bad3c1c7.js",
+      "static/chunks/main-app-7292d59f805fb8b7.js",
+      "static/chunks/app/packages/stellar-agent-kit/page-108234a360a5058e.js"
+    ],
+    "/packages/x402-stellar-sdk/page": [
+      "static/chunks/webpack-100b9e646d9c912e.js",
+      "static/chunks/618f8807-856469c17aca91ac.js",
+      "static/chunks/364-acf740e6bad3c1c7.js",
+      "static/chunks/main-app-7292d59f805fb8b7.js",
+      "static/chunks/app/packages/x402-stellar-sdk/page-8a9888d7a69cdd25.js"
+    ],
+    "/packages/create-stellar-devkit-app/page": [
+      "static/chunks/webpack-100b9e646d9c912e.js",
+      "static/chunks/618f8807-856469c17aca91ac.js",
+      "static/chunks/364-acf740e6bad3c1c7.js",
+      "static/chunks/main-app-7292d59f805fb8b7.js",
+      "static/chunks/app/packages/create-stellar-devkit-app/page-0f4c8ab8762c8cbb.js"
     ]
   }
 }

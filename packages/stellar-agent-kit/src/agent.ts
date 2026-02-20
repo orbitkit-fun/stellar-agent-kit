@@ -82,6 +82,49 @@ export class StellarAgentKit {
     return this.dexSwap(quote);
   }
 
+  // ─── Account & balances ────────────────────────────────────────────────────
+
+  /**
+   * Get balances for an account (native + trustlines).
+   * @param accountId - Stellar account ID (G...); defaults to this agent's public key
+   * @returns List of balances: asset code, issuer (if not native), balance string, and optional limit
+   */
+  async getBalances(accountId?: string): Promise<Array<{ assetCode: string; issuer?: string; balance: string; limit?: string }>> {
+    this.ensureInitialized();
+    if (!this._horizon) throw new Error("Horizon not initialized");
+    const id = accountId ?? this.keypair.publicKey();
+    const account = await this._horizon.loadAccount(id);
+    return (account.balances as Array<{ asset_code: string; asset_issuer?: string; balance: string; limit?: string }>).map((b) => ({
+      assetCode: b.asset_code === "native" ? "XLM" : b.asset_code,
+      issuer: b.asset_issuer,
+      balance: b.balance,
+      limit: b.limit,
+    }));
+  }
+
+  /**
+   * Create a new Stellar account (funding from this agent's account).
+   * @param destination - New account's public key (G...)
+   * @param startingBalance - Amount of XLM to send (e.g. "1" for 1 XLM; minimum ~1 XLM for base reserve)
+   * @returns Transaction hash
+   */
+  async createAccount(destination: string, startingBalance: string): Promise<{ hash: string }> {
+    this.ensureInitialized();
+    if (!this._horizon) throw new Error("Horizon not initialized");
+    const networkPassphrase = Networks.PUBLIC;
+    const sourceAccount = await this._horizon.loadAccount(this.keypair.publicKey());
+    const tx = new TransactionBuilder(sourceAccount, {
+      fee: "100",
+      networkPassphrase,
+    })
+      .addOperation(Operation.createAccount({ destination, startingBalance }))
+      .setTimeout(180)
+      .build();
+    tx.sign(this.keypair);
+    const result = await this._horizon.submitTransaction(tx);
+    return { hash: result.hash };
+  }
+
   // ─── Payments (Horizon) ────────────────────────────────────────────────────
 
   /**
@@ -116,6 +159,59 @@ export class StellarAgentKit {
       .setTimeout(180)
       .build();
 
+    tx.sign(this.keypair);
+    const result = await this._horizon.submitTransaction(tx);
+    return { hash: result.hash };
+  }
+
+  /**
+   * Path payment (strict receive): send up to sendMax of sendAsset so destination receives exactly destAmount of destAsset.
+   * @param sendAsset - Asset to send (native or { code, issuer })
+   * @param sendMax - Maximum amount of sendAsset to send (display units)
+   * @param destination - Recipient account (G...)
+   * @param destAsset - Asset the recipient receives
+   * @param destAmount - Exact amount of destAsset the recipient gets (display units)
+   * @param path - Optional intermediate assets for the path
+   */
+  async pathPayment(
+    sendAsset: { assetCode: string; issuer?: string },
+    sendMax: string,
+    destination: string,
+    destAsset: { assetCode: string; issuer?: string },
+    destAmount: string,
+    path: Array<{ assetCode: string; issuer?: string }> = []
+  ): Promise<{ hash: string }> {
+    this.ensureInitialized();
+    if (!this._horizon) throw new Error("Horizon not initialized");
+    const send =
+      sendAsset.assetCode === "XLM" && !sendAsset.issuer
+        ? Asset.native()
+        : new Asset(sendAsset.assetCode, sendAsset.issuer!);
+    const dest =
+      destAsset.assetCode === "XLM" && !destAsset.issuer
+        ? Asset.native()
+        : new Asset(destAsset.assetCode, destAsset.issuer!);
+    const pathAssets = path.map((p) =>
+      p.assetCode === "XLM" && !p.issuer ? Asset.native() : new Asset(p.assetCode, p.issuer!)
+    );
+    const networkPassphrase = Networks.PUBLIC;
+    const sourceAccount = await this._horizon.loadAccount(this.keypair.publicKey());
+    const tx = new TransactionBuilder(sourceAccount, {
+      fee: "100",
+      networkPassphrase,
+    })
+      .addOperation(
+        Operation.pathPaymentStrictReceive({
+          sendAsset: send,
+          sendMax,
+          destination,
+          destAsset: dest,
+          destAmount,
+          path: pathAssets,
+        })
+      )
+      .setTimeout(180)
+      .build();
     tx.sign(this.keypair);
     const result = await this._horizon.submitTransaction(tx);
     return { hash: result.hash };

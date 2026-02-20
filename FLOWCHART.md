@@ -2,6 +2,8 @@
 
 High-level plan and current progress for the hackathon agent kit. Last updated to reflect shipped packages, Warly UI (DevKit, Swap, Send, MCP), and comparison to [Mantle DevKit](https://github.com/Debanjannnn/mantle-devkit).
 
+**Reference:** For structural and API-pattern alignment with Mantle DevKit, see [docs/REFERENCE_MANTLE_DEVKIT.md](docs/REFERENCE_MANTLE_DEVKIT.md). The repo includes a copy of Mantle DevKit at `mantle-devkit-main/mantle-devkit-main` for direct comparison.
+
 ---
 
 ## 1. Overall architecture (current)

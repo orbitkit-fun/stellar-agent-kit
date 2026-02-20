@@ -1,0 +1,105 @@
+{
+  "name": "mantle-agent-kit-sdk",
+  "version": "1.2.0",
+  "description": "TypeScript SDK for DeFi protocols on Mantle Network - Unified interface for swaps, lending, liquid staking, perpetual trading, cross-chain operations, Pyth oracles, token launchpad, and NFT minting",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    ".env.example",
+    "examples"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "bun run build"
+  },
+  "keywords": [
+    "mantle",
+    "mantle-network",
+    "mantle-l2",
+    "defi",
+    "web3",
+    "blockchain",
+    "ethereum",
+    "layer2",
+    "agent",
+    "sdk",
+    "typescript",
+    "viem",
+    "dex",
+    "swap",
+    "trading",
+    "lending",
+    "borrowing",
+    "liquid-staking",
+    "cross-chain",
+    "agni",
+    "agni-finance",
+    "lendle",
+    "merchant-moe",
+    "meth",
+    "uniswap",
+    "openocean",
+    "okx",
+    "squid-router",
+    "pikeperps",
+    "perpetual-trading",
+    "leverage-trading",
+    "pyth",
+    "pyth-network",
+    "oracle",
+    "price-feed",
+    "token-launchpad",
+    "erc20",
+    "rwa",
+    "real-world-assets",
+    "nft",
+    "nft-launchpad",
+    "erc721",
+    "mint",
+    "tokenization"
+  ],
+  "author": "Debanjannn",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Debanjannnn/mantle-devkit",
+    "directory": "packages/mantle-agent-kit"
+  },
+  "homepage": "https://mantle-devkit.vercel.app",
+  "bugs": {
+    "url": "https://github.com/Debanjannnn/mantle-devkit/issues"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/crypto-js": "^4.2.2",
+    "tsup": "^8.5.1",
+    "typescript": "^5.3.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "axios": "^1.13.2",
+    "crypto-js": "^4.2.0",
+    "dotenv": "^17.2.3",
+    "viem": "^2.43.3",
+    "web3": "^4.16.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

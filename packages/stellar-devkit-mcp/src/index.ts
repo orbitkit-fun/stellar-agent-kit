@@ -43,26 +43,35 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: [
     {
       name: "get_stellar_contract",
-      description: "Use this tool when the user asks for a Stellar/Soroban contract ID or protocol address (e.g. SoroSwap mainnet). Returns the Soroban contract ID. Call with protocol (e.g. 'soroswap') and optional network (mainnet only).",
+      description: "Use this tool when the user asks for a Stellar/Soroban contract ID or protocol address. Returns the contract ID or SDK link. Call with protocol: soroswap, blend, fxdao, reflector, allbridge; optional network (mainnet default).",
       inputSchema: {
         type: "object",
         properties: {
-          protocol: { type: "string", description: "Protocol name, e.g. soroswap" },
-          network: { type: "string", enum: ["mainnet"], description: "Network (mainnet only)" },
+          protocol: { type: "string", description: "Protocol: soroswap, blend, fxdao, reflector, allbridge" },
+          network: { type: "string", enum: ["mainnet", "testnet"], description: "Network (mainnet default)" },
         },
         required: ["protocol"],
       },
     },
     {
       name: "get_sdk_snippet",
-      description: "Use this tool when the user asks for Stellar DevKit code, SDK snippet, or example (swap, quote, x402 server/client). Returns copy-paste code for stellar-agent-kit or x402-stellar-sdk. Call with operation: 'swap' | 'quote' | 'x402-server' | 'x402-client'.",
+      description: "Returns copy-paste code for stellar-agent-kit or x402-stellar-sdk. Call with operation: swap, quote, x402-server, x402-client, get-balances, send-payment, create-account, path-payment.",
       inputSchema: {
         type: "object",
         properties: {
-          operation: { type: "string", enum: ["swap", "quote", "x402-server", "x402-client"], description: "Which snippet to return" },
+          operation: {
+            type: "string",
+            enum: ["swap", "quote", "x402-server", "x402-client", "get-balances", "send-payment", "create-account", "path-payment"],
+            description: "Which snippet to return",
+          },
         },
         required: ["operation"],
       },
+    },
+    {
+      name: "list_devkit_methods",
+      description: "List Stellar DevKit public APIs: stellar-agent-kit (StellarAgentKit methods) and x402-stellar-sdk (server/client). Use when the user asks what the devkit can do or what methods are available.",
+      inputSchema: { type: "object", properties: {} },
     },
     {
       name: "get_quote",
@@ -85,21 +94,87 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
   if (name === "get_stellar_contract") {
     const protocol = (args?.protocol as string)?.toLowerCase() || "";
     const network = ((args?.network as string) || "mainnet").toLowerCase();
-    const ids = protocol === "soroswap" 
-      ? { testnet: "CCJUD55AG6W5HAI5LRVNKAE5WDP5XGZBUDS5WNTIVDU7O264UZZE7BRD", mainnet: "CAG5LRYQ5JVEUI5TEID72EYOVX44TTUJT5BQR2J6J77FH65PCCFAJDDH" }
-      : null;
-    const text = ids ? `${protocol} ${network}: ${ids[network as "testnet"|"mainnet"]}` : `Unknown protocol: ${protocol}`;
+    const protocolIds: Record<string, { testnet?: string; mainnet: string } | { mainnet: string; note?: string }> = {
+      soroswap: { testnet: "CCJUD55AG6W5HAI5LRVNKAE5WDP5XGZBUDS5WNTIVDU7O264UZZE7BRD", mainnet: "CAG5LRYQ5JVEUI5TEID72EYOVX44TTUJT5BQR2J6J77FH65PCCFAJDDH" },
+      blend: { mainnet: "CCCCIQSDILITHMM7PBSLVDT5MISSY7R26MNZXCX4H7J5JQ5FPIYOGYFS" },
+      fxdao: { mainnet: "CCUN4RXU5VNDHSF4S4RKV4ZJYMX2YWKOH6L4AKEKVNVDQ7HY5QIAO4UB", note: "Vaults; see FXDAO_MAINNET in stellar-agent-kit for Locking Pool, USDx, etc." },
+      reflector: { mainnet: "CALI2BYU2JE6WVRUFYTS6MSBNEHGJ35P4AVCZYF3B6QOE3QKOB2PLE6M", note: "dex feed; REFLECTOR_ORACLE in stellar-agent-kit has cexDex, fiat" },
+      allbridge: { mainnet: "https://docs-core.allbridge.io/sdk/guides/stellar", note: "No single contract; use Allbridge Core SDK" },
+    };
+    const entry = protocolIds[protocol];
+    const n = network as "testnet" | "mainnet";
+    let text: string;
+    if (!entry) text = `Unknown protocol: ${protocol}. Supported: ${Object.keys(protocolIds).join(", ")}`;
+    else if ("note" in entry) text = `${protocol} mainnet: ${entry.mainnet}. ${entry.note ?? ""}`;
+    else text = entry[n] ? `${protocol} ${network}: ${entry[n]}` : `${protocol} ${network}: not available (mainnet only: ${entry.mainnet})`;
     return { content: [{ type: "text", text }] };
   }
   if (name === "get_sdk_snippet") {
     const op = (args?.operation as string)?.toLowerCase() || "";
     const snippets: Record<string, string> = {
-      swap: "const agent = new StellarAgentKit(secretKey, 'mainnet'); await agent.initialize(); const quote = await agent.dexGetQuote(fromAsset, toAsset, amount); await agent.dexSwap(quote);",
-      quote: "await agent.dexGetQuote({ contractId: '...' }, { contractId: '...' }, amount);",
-      "x402-server": "app.use('/api/premium', x402({ price: '1', assetCode: 'XLM', network: 'mainnet', destination: 'G...' }));",
-      "x402-client": "await x402Fetch(url, init, { payWithStellar: async (req) => { /* Freighter payment */ return { transactionHash: txHash }; } });",
+      swap: `import { StellarAgentKit, MAINNET_ASSETS } from "stellar-agent-kit";
+const agent = new StellarAgentKit(process.env.SECRET_KEY!, "mainnet");
+await agent.initialize();
+const quote = await agent.dexGetQuote(
+  { contractId: MAINNET_ASSETS.XLM.contractId },
+  { contractId: MAINNET_ASSETS.USDC.contractId },
+  "10000000"
+);
+const result = await agent.dexSwap(quote);`,
+      quote: `import { StellarAgentKit, MAINNET_ASSETS } from "stellar-agent-kit";
+const agent = new StellarAgentKit(secretKey, "mainnet");
+await agent.initialize();
+const quote = await agent.dexGetQuote(
+  { contractId: MAINNET_ASSETS.XLM.contractId },
+  { contractId: MAINNET_ASSETS.USDC.contractId },
+  amount
+);`,
+      "x402-server": `import { x402 } from "x402-stellar-sdk/server";
+const options = { price: "1", assetCode: "XLM", network: "testnet" as const, destination: process.env.X402_DESTINATION! };
+app.use("/api/premium", x402(options));
+app.get("/api/premium", (req, res) => res.json({ data: "Premium content" }));`,
+      "x402-client": `import { x402Fetch } from "x402-stellar-sdk/client";
+const res = await x402Fetch(url, undefined, {
+  payWithStellar: async (req) => {
+    const txHash = await submitPaymentWithWallet(req);
+    return txHash ? { transactionHash: txHash } : null;
+  },
+});`,
+      "get-balances": `const balances = await agent.getBalances();
+// or for another account: await agent.getBalances("G...");`,
+      "send-payment": `await agent.sendPayment("G...", "10");
+// custom asset: await agent.sendPayment("G...", "5", "USDC", "G...");`,
+      "create-account": `await agent.createAccount("G...", "1");`,
+      "path-payment": `await agent.pathPayment(
+  { assetCode: "XLM" }, "10", "G...",
+  { assetCode: "USDC", issuer: "G..." }, "5", []
+);`,
     };
     const text = snippets[op] || `Unknown operation: ${op}. Use: ${Object.keys(snippets).join(", ")}`;
+    return { content: [{ type: "text", text }] };
+  }
+  if (name === "list_devkit_methods") {
+    const text = `# Stellar DevKit – public APIs
+
+## stellar-agent-kit (StellarAgentKit)
+- initialize() – call once after construction
+- getBalances(accountId?) – native + trustline balances
+- sendPayment(to, amount, assetCode?, assetIssuer?)
+- createAccount(destination, startingBalance)
+- pathPayment(sendAsset, sendMax, destination, destAsset, destAmount, path?)
+- dexGetQuote(fromAsset, toAsset, amount)
+- dexSwap(quote)
+- dexSwapExactIn(fromAsset, toAsset, amount)
+- getPrice(asset)
+- lendingSupply(args), lendingBorrow(args)
+
+## x402-stellar-sdk
+- Server: x402(options), x402Hono(options), withX402(headers, options), processPaymentMiddleware, verifyPaymentOnChain
+- Client: x402Fetch(input, init?, { payWithStellar })
+
+## stellar-agent-kit config
+- MAINNET_ASSETS (XLM, USDC), SOROSWAP_AGGREGATOR, BLEND_POOLS_MAINNET, REFLECTOR_ORACLE
+- FXDAO_MAINNET (vaults, lockingPool, usdx, eurx, gbpx, fxg, oracle), ALLBRIDGE_CORE_STELLAR_DOCS (SDK link)`;
     return { content: [{ type: "text", text }] };
   }
   if (name === "get_quote") {

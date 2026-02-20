@@ -16,6 +16,9 @@ import {
   Trash2,
   ExternalLink,
   Wallet,
+  FileCode,
+  BookOpen,
+  ChevronDown,
 } from "lucide-react"
 import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
@@ -30,104 +33,59 @@ type DevKitProject = {
   payoutWallet: string
 }
 
-// ─── Protocol cards (Protocols tab) ─────────────────────────────────────────
+// ─── 5 DeFi protocols (Protocols tab: hover dropdown → Contract + Docs) ─────
+const STELLAR_EXPERT_CONTRACT = "https://stellar.expert/explorer/public/contract"
+
+const DEFI_PROTOCOLS = [
+  {
+    id: "soroswap",
+    name: "SoroSwap Finance",
+    contractId: "CAG5LRYQ5JVEUI5TEID72EYOVX44TTUJT5BQR2J6J77FH65PCCFAJDDH",
+    contractUrl: `${STELLAR_EXPERT_CONTRACT}/CAG5LRYQ5JVEUI5TEID72EYOVX44TTUJT5BQR2J6J77FH65PCCFAJDDH`,
+    docsUrl: "https://soroswap.finance",
+  },
+  {
+    id: "blend",
+    name: "Blend",
+    contractId: "CCCCIQSDILITHMM7PBSLVDT5MISSY7R26MNZXCX4H7J5JQ5FPIYOGYFS",
+    contractUrl: `${STELLAR_EXPERT_CONTRACT}/CCCCIQSDILITHMM7PBSLVDT5MISSY7R26MNZXCX4H7J5JQ5FPIYOGYFS`,
+    docsUrl: "https://blend.capital",
+  },
+  {
+    id: "allbridge",
+    name: "Allbridge Core",
+    contractId: null,
+    contractUrl: "https://docs-core.allbridge.io/sdk/guides/stellar",
+    docsUrl: "https://docs-core.allbridge.io/sdk/guides/stellar",
+  },
+  {
+    id: "fxdao",
+    name: "FxDAO",
+    contractId: "CCUN4RXU5VNDHSF4S4RKV4ZJYMX2YWKOH6L4AKEKVNVDQ7HY5QIAO4UB",
+    contractUrl: `${STELLAR_EXPERT_CONTRACT}/CCUN4RXU5VNDHSF4S4RKV4ZJYMX2YWKOH6L4AKEKVNVDQ7HY5QIAO4UB`,
+    docsUrl: "https://fxdao.io/docs",
+  },
+  {
+    id: "reflector",
+    name: "Reflector",
+    contractId: "CALI2BYU2JE6WVRUFYTS6MSBNEHGJ35P4AVCZYF3B6QOE3QKOB2PLE6M",
+    contractUrl: `${STELLAR_EXPERT_CONTRACT}/CALI2BYU2JE6WVRUFYTS6MSBNEHGJ35P4AVCZYF3B6QOE3QKOB2PLE6M`,
+    docsUrl: "https://developers.stellar.org/docs/data/oracles/oracle-providers",
+  },
+] as const
+
+// ─── Code generator options (Code generator tab) ───────────────────────────
 const PROTOCOLS = [
-  {
-    id: "swap-soroswap",
-    title: "Swap on SoroSwap",
-    tags: ["DEX", "Mainnet"],
-    description: "Get quote and execute swap via SoroSwap aggregator. Best route may use SoroSwap, Phoenix, or Aqua liquidity.",
-    codeKey: "swap",
-    tryItHref: "/swap",
-  },
-  {
-    id: "swap-phoenix",
-    title: "Swap via Phoenix",
-    tags: ["DEX", "Mainnet"],
-    description: "Phoenix DEX liquidity is included in the SoroSwap aggregator. Same StellarAgentKit code; the API returns the best route across SoroSwap, Phoenix, and Aqua.",
-    codeKey: "swap",
-    tryItHref: "/swap",
-  },
-  {
-    id: "swap-aqua",
-    title: "Swap via Aqua",
-    tags: ["DEX", "AMM", "Mainnet"],
-    description: "Aqua (Aquarius) AMM liquidity is included in the SoroSwap aggregator. Same StellarAgentKit code; use dexGetQuote + dexSwap for the best price across all protocols.",
-    codeKey: "swap",
-    tryItHref: "/swap",
-  },
-  {
-    id: "get-quote",
-    title: "Get swap quote",
-    tags: ["DEX", "Mainnet"],
-    description: "Get a quote for swapping tokens without executing.",
-    codeKey: "quote",
-    tryItHref: "/swap",
-  },
-  {
-    id: "send-payment",
-    title: "Send payment",
-    tags: ["Payments", "Mainnet"],
-    description: "Send XLM or custom asset to a destination address.",
-    codeKey: "sendPayment",
-    tryItHref: "/swap?tab=send",
-  },
-  {
-    id: "x402-server",
-    title: "x402 payment-gated API",
-    tags: ["x402", "Server"],
-    description: "Protect an API route with Stellar payment (402).",
-    codeKey: "x402Server",
-    tryItHref: null,
-  },
-  {
-    id: "x402-client",
-    title: "x402 client (pay with Stellar)",
-    tags: ["x402", "Client"],
-    description: "Call a payment-gated API and pay with Stellar.",
-    codeKey: "x402Client",
-    tryItHref: null,
-  },
-  {
-    id: "one-shot-swap",
-    title: "One-shot swap (dexSwapExactIn)",
-    tags: ["DEX", "Mainnet"],
-    description: "Quote and execute in one call. Same as get quote + swap but a single method.",
-    codeKey: "oneShotSwap",
-    tryItHref: "/swap",
-  },
-  {
-    id: "full-setup",
-    title: "Full setup example",
-    tags: ["Setup", "Mainnet"],
-    description: "Complete flow: initialize agent, get quote, execute swap. Copy-paste ready.",
-    codeKey: "fullSetup",
-    tryItHref: "/swap",
-  },
-  {
-    id: "oracle-reflector",
-    title: "Get price (Reflector oracle)",
-    tags: ["Oracle", "Mainnet"],
-    description: "Fetch latest asset price from Reflector (SEP-40). Use contract ID for on-chain tokens or symbol (e.g. XLM, BTC) for ticker feeds.",
-    codeKey: "getPrice",
-    tryItHref: null,
-  },
-  {
-    id: "lending-blend-supply",
-    title: "Lending: supply (Blend)",
-    tags: ["Lending", "Mainnet"],
-    description: "Supply (deposit) an asset to a Blend pool as collateral. Uses Blend Protocol on Stellar.",
-    codeKey: "lendingSupply",
-    tryItHref: null,
-  },
-  {
-    id: "lending-blend-borrow",
-    title: "Lending: borrow (Blend)",
-    tags: ["Lending", "Mainnet"],
-    description: "Borrow an asset from a Blend pool. Requires sufficient collateral in the pool.",
-    codeKey: "lendingBorrow",
-    tryItHref: null,
-  },
+  { id: "swap-soroswap", title: "Swap on SoroSwap", codeKey: "swap", tryItHref: "/swap" as string | null },
+  { id: "get-quote", title: "Get swap quote", codeKey: "quote", tryItHref: "/swap" as string | null },
+  { id: "send-payment", title: "Send payment", codeKey: "sendPayment", tryItHref: "/swap?tab=send" as string | null },
+  { id: "x402-server", title: "x402 payment-gated API", codeKey: "x402Server", tryItHref: null },
+  { id: "x402-client", title: "x402 client (pay with Stellar)", codeKey: "x402Client", tryItHref: null },
+  { id: "one-shot-swap", title: "One-shot swap (dexSwapExactIn)", codeKey: "oneShotSwap", tryItHref: "/swap" as string | null },
+  { id: "full-setup", title: "Full setup example", codeKey: "fullSetup", tryItHref: "/swap" as string | null },
+  { id: "oracle-reflector", title: "Get price (Reflector oracle)", codeKey: "getPrice", tryItHref: null },
+  { id: "lending-blend-supply", title: "Lending: supply (Blend)", codeKey: "lendingSupply", tryItHref: null },
+  { id: "lending-blend-borrow", title: "Lending: borrow (Blend)", codeKey: "lendingBorrow", tryItHref: null },
 ]
 
 // ─── Code generator snippets (from your SDKs) ─────────────────────────────
@@ -559,18 +517,37 @@ export default function DevKitPage() {
             {/* ─── Protocols: name-only cards, click opens Code generator ──────── */}
             <TabsContent value="protocols" className="mt-8">
               <p className="text-zinc-400 mb-6">
-                Click a protocol to open its code in Code generator.
+                The 5 DeFi protocols integrated in the kit. Hover for Contract and Docs links.
               </p>
-              <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {PROTOCOLS.map((proto) => (
-                  <li key={proto.id}>
-                    <button
-                      type="button"
-                      onClick={() => setCodeGenKey(proto.codeKey)}
-                      className="w-full text-left rounded-xl border border-zinc-800 bg-zinc-950/50 py-4 px-4 hover:border-[#5100fd]/50 hover:bg-zinc-900/50 transition-colors"
-                    >
-                      <span className="font-medium text-white">{proto.title}</span>
-                    </button>
+              <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {DEFI_PROTOCOLS.map((proto) => (
+                  <li key={proto.id} className="group relative">
+                    <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 py-4 px-4 hover:border-[#5100fd]/50 hover:bg-zinc-900/50 transition-colors flex items-center justify-between gap-2">
+                      <span className="font-medium text-white">{proto.name}</span>
+                      <ChevronDown className="h-4 w-4 text-zinc-500 group-hover:text-zinc-400 shrink-0 transition-transform group-hover:rotate-180" />
+                    </div>
+                    <div className="absolute top-full left-0 right-0 z-10 pt-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                      <div className="rounded-lg border border-zinc-700 bg-zinc-900 shadow-xl py-1">
+                      <a
+                        href={proto.contractUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
+                      >
+                        <FileCode className="h-4 w-4 shrink-0" />
+                        {proto.contractId ? "Contract" : "SDK / Contract"}
+                      </a>
+                      <a
+                        href={proto.docsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
+                      >
+                        <BookOpen className="h-4 w-4 shrink-0" />
+                        Docs
+                      </a>
+                      </div>
+                    </div>
                   </li>
                 ))}
               </ul>

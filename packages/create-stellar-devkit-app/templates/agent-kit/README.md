@@ -9,9 +9,8 @@ Minimal Next.js app using `stellar-agent-kit` for a DEX quote.
    cp .env.example .env
    ```
    Edit `.env`:
-   - `SECRET_KEY` — Stellar secret key (S...) for the quote API (server-only).
-   - `SOROSWAP_API_KEY` — Optional for quote; required if you add swap execution.
-   - `NETWORK` — `testnet` or `mainnet` (default: testnet).
+   - `SECRET_KEY` — Stellar secret key (S...) for the quote API (server-only). Use a mainnet key.
+   - `SOROSWAP_API_KEY` — Required for DEX quotes (get one from the SoroSwap aggregator).
 
 2. Install and run:
    ```bash

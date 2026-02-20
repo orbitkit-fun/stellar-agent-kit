@@ -76,6 +76,13 @@ export function MobileMenu() {
           >
             Chat
           </Link>
+          <Link
+            href="/pricing"
+            onClick={() => setOpen(false)}
+            className="text-left py-3 px-3 text-base text-zinc-400 hover:text-white transition-colors duration-500 ease-out"
+          >
+            Pricing
+          </Link>
           <div className="mt-4 pt-4 border-t border-zinc-800">
             <a
               href="https://github.com/stellar/stellar-agent-kit"

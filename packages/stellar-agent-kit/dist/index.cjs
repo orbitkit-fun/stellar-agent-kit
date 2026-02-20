@@ -20,9 +20,11 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // src/index.ts
 var index_exports = {};
 __export(index_exports, {
+  ALLBRIDGE_CORE_STELLAR_DOCS: () => ALLBRIDGE_CORE_STELLAR_DOCS,
   BAND_ORACLE: () => BAND_ORACLE,
   BLEND_POOLS: () => BLEND_POOLS,
   BLEND_POOLS_MAINNET: () => BLEND_POOLS_MAINNET,
+  FXDAO_MAINNET: () => FXDAO_MAINNET,
   MAINNET_ASSETS: () => MAINNET_ASSETS,
   REFLECTOR_ORACLE: () => REFLECTOR_ORACLE,
   SOROSWAP_AGGREGATOR: () => SOROSWAP_AGGREGATOR,
@@ -383,6 +385,43 @@ var StellarAgentKit = class {
     const quote = await this.dexGetQuote(fromAsset, toAsset, amount);
     return this.dexSwap(quote);
   }
+  // ─── Account & balances ────────────────────────────────────────────────────
+  /**
+   * Get balances for an account (native + trustlines).
+   * @param accountId - Stellar account ID (G...); defaults to this agent's public key
+   * @returns List of balances: asset code, issuer (if not native), balance string, and optional limit
+   */
+  async getBalances(accountId) {
+    this.ensureInitialized();
+    if (!this._horizon) throw new Error("Horizon not initialized");
+    const id = accountId ?? this.keypair.publicKey();
+    const account = await this._horizon.loadAccount(id);
+    return account.balances.map((b) => ({
+      assetCode: b.asset_code === "native" ? "XLM" : b.asset_code,
+      issuer: b.asset_issuer,
+      balance: b.balance,
+      limit: b.limit
+    }));
+  }
+  /**
+   * Create a new Stellar account (funding from this agent's account).
+   * @param destination - New account's public key (G...)
+   * @param startingBalance - Amount of XLM to send (e.g. "1" for 1 XLM; minimum ~1 XLM for base reserve)
+   * @returns Transaction hash
+   */
+  async createAccount(destination, startingBalance) {
+    this.ensureInitialized();
+    if (!this._horizon) throw new Error("Horizon not initialized");
+    const networkPassphrase = import_stellar_sdk5.Networks.PUBLIC;
+    const sourceAccount = await this._horizon.loadAccount(this.keypair.publicKey());
+    const tx = new import_stellar_sdk5.TransactionBuilder(sourceAccount, {
+      fee: "100",
+      networkPassphrase
+    }).addOperation(import_stellar_sdk5.Operation.createAccount({ destination, startingBalance })).setTimeout(180).build();
+    tx.sign(this.keypair);
+    const result = await this._horizon.submitTransaction(tx);
+    return { hash: result.hash };
+  }
   // ─── Payments (Horizon) ────────────────────────────────────────────────────
   /**
    * Send a native or custom-asset payment (Horizon).
@@ -401,6 +440,42 @@ var StellarAgentKit = class {
       fee: "100",
       networkPassphrase
     }).addOperation(import_stellar_sdk5.Operation.payment({ destination: to, asset, amount })).setTimeout(180).build();
+    tx.sign(this.keypair);
+    const result = await this._horizon.submitTransaction(tx);
+    return { hash: result.hash };
+  }
+  /**
+   * Path payment (strict receive): send up to sendMax of sendAsset so destination receives exactly destAmount of destAsset.
+   * @param sendAsset - Asset to send (native or { code, issuer })
+   * @param sendMax - Maximum amount of sendAsset to send (display units)
+   * @param destination - Recipient account (G...)
+   * @param destAsset - Asset the recipient receives
+   * @param destAmount - Exact amount of destAsset the recipient gets (display units)
+   * @param path - Optional intermediate assets for the path
+   */
+  async pathPayment(sendAsset, sendMax, destination, destAsset, destAmount, path = []) {
+    this.ensureInitialized();
+    if (!this._horizon) throw new Error("Horizon not initialized");
+    const send = sendAsset.assetCode === "XLM" && !sendAsset.issuer ? import_stellar_sdk5.Asset.native() : new import_stellar_sdk5.Asset(sendAsset.assetCode, sendAsset.issuer);
+    const dest = destAsset.assetCode === "XLM" && !destAsset.issuer ? import_stellar_sdk5.Asset.native() : new import_stellar_sdk5.Asset(destAsset.assetCode, destAsset.issuer);
+    const pathAssets = path.map(
+      (p) => p.assetCode === "XLM" && !p.issuer ? import_stellar_sdk5.Asset.native() : new import_stellar_sdk5.Asset(p.assetCode, p.issuer)
+    );
+    const networkPassphrase = import_stellar_sdk5.Networks.PUBLIC;
+    const sourceAccount = await this._horizon.loadAccount(this.keypair.publicKey());
+    const tx = new import_stellar_sdk5.TransactionBuilder(sourceAccount, {
+      fee: "100",
+      networkPassphrase
+    }).addOperation(
+      import_stellar_sdk5.Operation.pathPaymentStrictReceive({
+        sendAsset: send,
+        sendMax,
+        destination,
+        destAsset: dest,
+        destAmount,
+        path: pathAssets
+      })
+    ).setTimeout(180).build();
     tx.sign(this.keypair);
     const result = await this._horizon.submitTransaction(tx);
     return { hash: result.hash };
@@ -438,11 +513,25 @@ var MAINNET_ASSETS = {
   USDC: { contractId: "CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75" }
 };
 var SOROSWAP_AGGREGATOR = "CAG5LRYQ5JVEUI5TEID72EYOVX44TTUJT5BQR2J6J77FH65PCCFAJDDH";
+
+// src/config/protocols.ts
+var FXDAO_MAINNET = {
+  vaults: "CCUN4RXU5VNDHSF4S4RKV4ZJYMX2YWKOH6L4AKEKVNVDQ7HY5QIAO4UB",
+  lockingPool: "CDCART6WRSM2K4CKOAOB5YKUVBSJ6KLOVS7ZEJHA4OAQ2FXX7JOHLXIP",
+  usdx: "CDIKURWHYS4FFTR5KOQK6MBFZA2K3E26WGBQI6PXBYWZ4XIOPJHDFJKP",
+  eurx: "CBN3NCJSMOQTC6SPEYK3A44NU4VS3IPKTARJLI3Y77OH27EWBY36TP7U",
+  gbpx: "CBCO65UOWXY2GR66GOCMCN6IU3Y45TXCPBY3FLUNL4AOUMOCKVIVV6JC",
+  fxg: "CDBR4FMYL5WPUDBIXTBEBU2AFEYTDLXVOTRZHXS3JC575C7ZQRKYZQ55",
+  oracle: "CB5OTV4GV24T5USEZHFVYGC3F4A4MPUQ3LN56E76UK2IT7MJ6QXW4TFS"
+};
+var ALLBRIDGE_CORE_STELLAR_DOCS = "https://docs-core.allbridge.io/sdk/guides/stellar";
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
+  ALLBRIDGE_CORE_STELLAR_DOCS,
   BAND_ORACLE,
   BLEND_POOLS,
   BLEND_POOLS_MAINNET,
+  FXDAO_MAINNET,
   MAINNET_ASSETS,
   REFLECTOR_ORACLE,
   SOROSWAP_AGGREGATOR,

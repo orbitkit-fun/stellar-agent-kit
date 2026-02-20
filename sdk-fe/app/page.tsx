@@ -17,7 +17,7 @@ const NETWORKS = [
 const SNIPPETS = {
   "Agent Kit": `import { StellarAgentKit, MAINNET_ASSETS } from "stellar-agent-kit";
 
-const agent = new StellarAgentKit(process.env.SECRET_KEY!, "testnet");
+const agent = new StellarAgentKit(process.env.SECRET_KEY!, "mainnet");
 await agent.initialize();
 
 const quote = await agent.dexGetQuote(
@@ -29,13 +29,14 @@ const result = await agent.dexSwap(quote);
 console.log(result.hash);`,
   "x402 Server": `import { x402 } from "x402-stellar-sdk/server";
 
-app.use("/api/premium", x402({
+const options = {
   price: "1",
   assetCode: "XLM",
-  network: "testnet",
-  destination: "G...",
+  network: "testnet" as const,
+  destination: process.env.X402_DESTINATION!,
   memo: "premium",
-}));
+};
+app.use("/api/premium", x402(options));
 app.get("/api/premium", (_, res) => res.json({ data: "Premium" }));`,
   "x402 Client": `import { x402Fetch } from "x402-stellar-sdk/client";
 
@@ -52,6 +53,12 @@ export default function Home() {
   const [tab, setTab] = useState<keyof typeof SNIPPETS>("Agent Kit");
   return (
     <main style={{ maxWidth: 900, margin: "0 auto", padding: 24 }}>
+      <nav style={{ marginBottom: 24, display: "flex", gap: 16 }}>
+        <a href="/" style={{ color: "#a78bfa", textDecoration: "none" }}>Overview</a>
+        <a href="/packages/x402-stellar-sdk" style={{ color: "#a1a1aa", textDecoration: "none" }}>x402-stellar-sdk</a>
+        <a href="/packages/stellar-agent-kit" style={{ color: "#a1a1aa", textDecoration: "none" }}>stellar-agent-kit</a>
+        <a href="/packages/create-stellar-devkit-app" style={{ color: "#a1a1aa", textDecoration: "none" }}>create-stellar-devkit-app</a>
+      </nav>
       <h1 style={{ fontSize: "2rem", fontWeight: 700, marginBottom: 8 }}>Stellar DevKit</h1>
       <p style={{ color: "#a1a1aa", marginBottom: 32 }}>
         Developer suite for Stellar: Agent Kit SDK, x402 payments, CLI scaffolder, MCP.
@@ -61,7 +68,7 @@ export default function Home() {
       <ul style={{ listStyle: "none", padding: 0, marginBottom: 32 }}>
         {PACKAGES.map((p) => (
           <li key={p.name} style={{ marginBottom: 8, padding: "12px 16px", background: "#18181b", borderRadius: 8 }}>
-            <strong style={{ color: "#a78bfa" }}>{p.name}</strong>
+            <a href={"/packages/" + p.name.replace("@", "").replace("/", "-")} style={{ color: "#a78bfa", textDecoration: "none", fontWeight: 600 }}>{p.name}</a>
             <span style={{ color: "#a1a1aa", marginLeft: 8 }}>{p.desc}</span>
           </li>
         ))}

@@ -175,6 +175,26 @@ declare class StellarAgentKit {
      */
     dexSwapExactIn(fromAsset: DexAsset, toAsset: DexAsset, amount: string): Promise<SwapResult>;
     /**
+     * Get balances for an account (native + trustlines).
+     * @param accountId - Stellar account ID (G...); defaults to this agent's public key
+     * @returns List of balances: asset code, issuer (if not native), balance string, and optional limit
+     */
+    getBalances(accountId?: string): Promise<Array<{
+        assetCode: string;
+        issuer?: string;
+        balance: string;
+        limit?: string;
+    }>>;
+    /**
+     * Create a new Stellar account (funding from this agent's account).
+     * @param destination - New account's public key (G...)
+     * @param startingBalance - Amount of XLM to send (e.g. "1" for 1 XLM; minimum ~1 XLM for base reserve)
+     * @returns Transaction hash
+     */
+    createAccount(destination: string, startingBalance: string): Promise<{
+        hash: string;
+    }>;
+    /**
      * Send a native or custom-asset payment (Horizon).
      * @param to - Destination account (G...)
      * @param amount - Amount in display units (e.g. "10" for 10 XLM)
@@ -182,6 +202,27 @@ declare class StellarAgentKit {
      * @param assetIssuer - Optional; required if assetCode is set
      */
     sendPayment(to: string, amount: string, assetCode?: string, assetIssuer?: string): Promise<{
+        hash: string;
+    }>;
+    /**
+     * Path payment (strict receive): send up to sendMax of sendAsset so destination receives exactly destAmount of destAsset.
+     * @param sendAsset - Asset to send (native or { code, issuer })
+     * @param sendMax - Maximum amount of sendAsset to send (display units)
+     * @param destination - Recipient account (G...)
+     * @param destAsset - Asset the recipient receives
+     * @param destAmount - Exact amount of destAsset the recipient gets (display units)
+     * @param path - Optional intermediate assets for the path
+     */
+    pathPayment(sendAsset: {
+        assetCode: string;
+        issuer?: string;
+    }, sendMax: string, destination: string, destAsset: {
+        assetCode: string;
+        issuer?: string;
+    }, destAmount: string, path?: Array<{
+        assetCode: string;
+        issuer?: string;
+    }>): Promise<{
         hash: string;
     }>;
     /**
@@ -219,4 +260,25 @@ declare const MAINNET_ASSETS: {
 /** SoroSwap aggregator contract ID (mainnet). */
 declare const SOROSWAP_AGGREGATOR: "CAG5LRYQ5JVEUI5TEID72EYOVX44TTUJT5BQR2J6J77FH65PCCFAJDDH";
 
-export { BAND_ORACLE, BLEND_POOLS, BLEND_POOLS_MAINNET, type DexAsset, type DexClient, type LendingBorrowArgs, type LendingResult, type LendingSupplyArgs, MAINNET_ASSETS, type NetworkConfig, type NetworkName, type OracleAsset, type PriceData, type QuoteResult, REFLECTOR_ORACLE, type ReflectorOracle, type ReflectorOracleConfig, SOROSWAP_AGGREGATOR, StellarAgentKit, type StellarAsset, type StellarNetwork, type SwapResult, createDexClient, createReflectorOracle, getNetworkConfig, lendingBorrow, lendingSupply, networks };
+/**
+ * Stellar DeFi protocol contract addresses (mainnet).
+ * SoroSwap and Blend are in assets.ts and lending/; here: FxDAO and Allbridge reference.
+ */
+/** FxDAO: synthetic stablecoins (USDx, EURx, GBPx) and vaults (fxdao.io/docs/addresses). */
+declare const FXDAO_MAINNET: {
+    readonly vaults: "CCUN4RXU5VNDHSF4S4RKV4ZJYMX2YWKOH6L4AKEKVNVDQ7HY5QIAO4UB";
+    readonly lockingPool: "CDCART6WRSM2K4CKOAOB5YKUVBSJ6KLOVS7ZEJHA4OAQ2FXX7JOHLXIP";
+    readonly usdx: "CDIKURWHYS4FFTR5KOQK6MBFZA2K3E26WGBQI6PXBYWZ4XIOPJHDFJKP";
+    readonly eurx: "CBN3NCJSMOQTC6SPEYK3A44NU4VS3IPKTARJLI3Y77OH27EWBY36TP7U";
+    readonly gbpx: "CBCO65UOWXY2GR66GOCMCN6IU3Y45TXCPBY3FLUNL4AOUMOCKVIVV6JC";
+    readonly fxg: "CDBR4FMYL5WPUDBIXTBEBU2AFEYTDLXVOTRZHXS3JC575C7ZQRKYZQ55";
+    readonly oracle: "CB5OTV4GV24T5USEZHFVYGC3F4A4MPUQ3LN56E76UK2IT7MJ6QXW4TFS";
+};
+/**
+ * Allbridge Core: cross-chain bridge to/from Stellar.
+ * No single aggregator contract; integrate via @allbridge/bridge-core-sdk.
+ * Docs: https://docs-core.allbridge.io/sdk/guides/stellar
+ */
+declare const ALLBRIDGE_CORE_STELLAR_DOCS: "https://docs-core.allbridge.io/sdk/guides/stellar";
+
+export { ALLBRIDGE_CORE_STELLAR_DOCS, BAND_ORACLE, BLEND_POOLS, BLEND_POOLS_MAINNET, type DexAsset, type DexClient, FXDAO_MAINNET, type LendingBorrowArgs, type LendingResult, type LendingSupplyArgs, MAINNET_ASSETS, type NetworkConfig, type NetworkName, type OracleAsset, type PriceData, type QuoteResult, REFLECTOR_ORACLE, type ReflectorOracle, type ReflectorOracleConfig, SOROSWAP_AGGREGATOR, StellarAgentKit, type StellarAsset, type StellarNetwork, type SwapResult, createDexClient, createReflectorOracle, getNetworkConfig, lendingBorrow, lendingSupply, networks };

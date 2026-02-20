@@ -1,0 +1,11 @@
+# x402 Configuration
+# Get your App ID from: https://mantle-x402.vercel.app
+#
+# Steps:
+# 1. Visit the dashboard URL above
+# 2. Connect your wallet
+# 3. Create a new project
+# 4. Copy your App ID and paste it below
+
+X402_APP_ID=your_app_id_here
+X402_PLATFORM_URL=https://mantle-x402.vercel.app

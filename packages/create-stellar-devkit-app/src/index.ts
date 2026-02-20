@@ -108,7 +108,11 @@ async function main() {
   console.log(chalk.green.bold("✔ Success!"), "Created", chalk.cyan(projectName!));
   console.log(chalk.gray("  cd " + projectName));
   if (skipInstall) console.log(chalk.gray("  npm install"));
-  console.log(chalk.gray("  cp .env.example .env  # then add SECRET_KEY / SOROSWAP_API_KEY"));
+  if (projectType === "agent-kit") {
+    console.log(chalk.gray("  cp .env.example .env  # add SECRET_KEY, SOROSWAP_API_KEY"));
+  } else {
+    console.log(chalk.gray("  cp .env.example .env  # add X402_DESTINATION (your G... address)"));
+  }
   console.log(chalk.gray("  npm run dev"));
   console.log();
 }

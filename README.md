@@ -2,6 +2,8 @@
 
 Stellar agentic devkit: unified SDK (swap, quote, send), AI agent CLI with tools, MCP server, x402 payments, and reference UI. All packages are published on npm: `stellar-agent-kit`, `x402-stellar-sdk`, `create-stellar-devkit-app`, `stellar-devkit-mcp`.
 
+Architecture: see [FLOWCHART.md](FLOWCHART.md) and [docs/REFERENCE_MANTLE_DEVKIT.md](docs/REFERENCE_MANTLE_DEVKIT.md) for how packages fit together.
+
 ## Setup (from this repo)
 
 ```bash

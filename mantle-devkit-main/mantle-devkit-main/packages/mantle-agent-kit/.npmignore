@@ -1,0 +1,35 @@
+# Source files
+src/
+*.ts
+!*.d.ts
+
+# Config files
+tsconfig.json
+tsup.config.ts
+.claude/
+
+# Development
+node_modules/
+.env
+.env.*
+*.log
+
+# Testing
+*.test.ts
+*.spec.ts
+__tests__/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Misc
+CLAUDE.md
+index.ts
+bun.lock

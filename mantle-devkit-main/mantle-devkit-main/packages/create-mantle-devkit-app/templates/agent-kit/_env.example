@@ -1,0 +1,10 @@
+# Server-side only - DO NOT expose to client
+# Your wallet private key (without 0x prefix is also fine)
+PRIVATE_KEY=your-private-key-here
+
+# Network configuration: "mainnet" or "testnet"
+# NOTE: Agni, Merchant Moe, and OpenOcean only work on mainnet
+NEXT_PUBLIC_NETWORK=mainnet
+
+# Optional: x402 platform integration
+# APP_ID=your-app-id

@@ -77,14 +77,23 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: "get_sdk_snippet",
-      description: "Use this tool when the user asks for Stellar DevKit code, SDK snippet, or example (swap, quote, x402 server/client). Returns copy-paste code for stellar-agent-kit or x402-stellar-sdk. Call with operation: 'swap' | 'quote' | 'x402-server' | 'x402-client'.",
+      description: "Returns copy-paste code for stellar-agent-kit or x402-stellar-sdk. Call with operation: swap, quote, x402-server, x402-client, get-balances, send-payment, create-account, path-payment.",
       inputSchema: {
         type: "object",
         properties: {
-          operation: { type: "string", enum: ["swap", "quote", "x402-server", "x402-client"], description: "Which snippet to return" }
+          operation: {
+            type: "string",
+            enum: ["swap", "quote", "x402-server", "x402-client", "get-balances", "send-payment", "create-account", "path-payment"],
+            description: "Which snippet to return"
+          }
         },
         required: ["operation"]
       }
+    },
+    {
+      name: "list_devkit_methods",
+      description: "List Stellar DevKit public APIs: stellar-agent-kit (StellarAgentKit methods) and x402-stellar-sdk (server/client). Use when the user asks what the devkit can do or what methods are available.",
+      inputSchema: { type: "object", properties: {} }
     },
     {
       name: "get_quote",
@@ -113,12 +122,65 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
   if (name === "get_sdk_snippet") {
     const op = args?.operation?.toLowerCase() || "";
     const snippets = {
-      swap: "const agent = new StellarAgentKit(secretKey, 'mainnet'); await agent.initialize(); const quote = await agent.dexGetQuote(fromAsset, toAsset, amount); await agent.dexSwap(quote);",
-      quote: "await agent.dexGetQuote({ contractId: '...' }, { contractId: '...' }, amount);",
-      "x402-server": "app.use('/api/premium', x402({ price: '1', assetCode: 'XLM', network: 'mainnet', destination: 'G...' }));",
-      "x402-client": "await x402Fetch(url, init, { payWithStellar: async (req) => { /* Freighter payment */ return { transactionHash: txHash }; } });"
+      swap: `import { StellarAgentKit, MAINNET_ASSETS } from "stellar-agent-kit";
+const agent = new StellarAgentKit(process.env.SECRET_KEY!, "mainnet");
+await agent.initialize();
+const quote = await agent.dexGetQuote(
+  { contractId: MAINNET_ASSETS.XLM.contractId },
+  { contractId: MAINNET_ASSETS.USDC.contractId },
+  "10000000"
+);
+const result = await agent.dexSwap(quote);`,
+      quote: `import { StellarAgentKit, MAINNET_ASSETS } from "stellar-agent-kit";
+const agent = new StellarAgentKit(secretKey, "mainnet");
+await agent.initialize();
+const quote = await agent.dexGetQuote(
+  { contractId: MAINNET_ASSETS.XLM.contractId },
+  { contractId: MAINNET_ASSETS.USDC.contractId },
+  amount
+);`,
+      "x402-server": `import { x402 } from "x402-stellar-sdk/server";
+const options = { price: "1", assetCode: "XLM", network: "testnet" as const, destination: process.env.X402_DESTINATION! };
+app.use("/api/premium", x402(options));
+app.get("/api/premium", (req, res) => res.json({ data: "Premium content" }));`,
+      "x402-client": `import { x402Fetch } from "x402-stellar-sdk/client";
+const res = await x402Fetch(url, undefined, {
+  payWithStellar: async (req) => {
+    const txHash = await submitPaymentWithWallet(req);
+    return txHash ? { transactionHash: txHash } : null;
+  },
+});`,
+      "get-balances": `const balances = await agent.getBalances();
+// or for another account: await agent.getBalances("G...");`,
+      "send-payment": `await agent.sendPayment("G...", "10");
+// custom asset: await agent.sendPayment("G...", "5", "USDC", "G...");`,
+      "create-account": `await agent.createAccount("G...", "1");`,
+      "path-payment": `await agent.pathPayment(
+  { assetCode: "XLM" }, "10", "G...",
+  { assetCode: "USDC", issuer: "G..." }, "5", []
+);`
     };
     const text = snippets[op] || `Unknown operation: ${op}. Use: ${Object.keys(snippets).join(", ")}`;
+    return { content: [{ type: "text", text }] };
+  }
+  if (name === "list_devkit_methods") {
+    const text = `# Stellar DevKit \u2013 public APIs
+
+## stellar-agent-kit (StellarAgentKit)
+- initialize() \u2013 call once after construction
+- getBalances(accountId?) \u2013 native + trustline balances
+- sendPayment(to, amount, assetCode?, assetIssuer?)
+- createAccount(destination, startingBalance)
+- pathPayment(sendAsset, sendMax, destination, destAsset, destAmount, path?)
+- dexGetQuote(fromAsset, toAsset, amount)
+- dexSwap(quote)
+- dexSwapExactIn(fromAsset, toAsset, amount)
+- getPrice(asset)
+- lendingSupply(args), lendingBorrow(args)
+
+## x402-stellar-sdk
+- Server: x402(options), x402Hono(options), withX402(headers, options), processPaymentMiddleware, verifyPaymentOnChain
+- Client: x402Fetch(input, init?, { payWithStellar })`;
     return { content: [{ type: "text", text }] };
   }
   if (name === "get_quote") {

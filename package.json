@@ -19,6 +19,7 @@
     "build:create-app": "npm run build -w packages/create-stellar-devkit-app",
     "build:mcp": "npm run build -w packages/stellar-devkit-mcp",
     "typecheck": "tsc --noEmit && npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
     "dev:sdk-fe": "npm run dev -w sdk-fe --if-present",
     "dev:ui": "npm run dev -w ui",
     "version:packages": "npm version patch -w stellar-agent-kit && npm version patch -w x402-stellar-sdk && npm version patch -w create-stellar-devkit-app && npm version patch -w stellar-devkit-mcp",

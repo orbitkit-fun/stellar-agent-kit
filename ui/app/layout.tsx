@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { LenisProvider } from "@/components/lenis-provider"
 import { WalletProvider } from "@/components/wallet-provider"
@@ -10,10 +10,11 @@ import "./globals.css"
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist" })
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" })
+const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-space-grotesk" })
 
 export const metadata: Metadata = {
-  title: "Warly — The Agentic Kit",
-  description: "Stellar DeFi in plain language. Check balances, swap XLM ↔ USDC, create trustlines, and get quotes—all through an AI agent.",
+  title: "Stellar DevKit — Developer suite for Stellar",
+  description: "One SDK for payments, DEX swaps, lending, and oracles. Monetize APIs with HTTP 402. Scaffold apps. AI-assisted dev with MCP.",
   generator: "stellar-agent-kit",
 }
 
@@ -24,7 +25,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geist.variable} ${geistMono.variable} font-sans antialiased`}>
+      <body className={`${geist.variable} ${geistMono.variable} ${spaceGrotesk.variable} font-sans antialiased`}>
         <WalletProvider>
           <AccountProvider>
             <LenisProvider>{children}</LenisProvider>
