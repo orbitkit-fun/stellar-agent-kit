@@ -2,24 +2,25 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { LiquidMetalButton } from "@/components/ui/liquid-metal-button"
 import { useAccount } from "@/hooks/use-account"
 import { useWallet } from "./wallet-provider"
-import { Wallet, ExternalLink } from "lucide-react"
+import { Wallet } from "lucide-react"
 import { toast } from "sonner"
 
 interface ConnectButtonProps {
   label?: string
-  variant?: "default" | "outline" | "ghost"
+  variant?: "default" | "shiny" | "outline" | "ghost"
   size?: "default" | "sm" | "lg"
 }
 
-export function ConnectButton({ 
-  label = "Connect Wallet", 
-  variant = "default",
-  size = "default" 
+export function ConnectButton({
+  label = "Connect Wallet",
+  variant = "shiny",
+  size = "default",
 }: ConnectButtonProps) {
   const { connect, isLoading } = useAccount()
-  const { isFreighterAvailable, isAllowed } = useWallet()
+  const { isFreighterAvailable } = useWallet()
   const [isConnecting, setIsConnecting] = useState(false)
 
   const handleConnect = async () => {
@@ -38,10 +39,10 @@ export function ConnectButton({
       setIsConnecting(true)
       await connect()
       toast.success("Wallet connected successfully!")
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to connect wallet:", error)
-      
-      if (error.message?.includes("User declined access")) {
+      const message = error instanceof Error ? error.message : ""
+      if (message?.includes("User declined access")) {
         toast.error("Connection cancelled", {
           description: "You declined the wallet connection request.",
         })
@@ -55,13 +56,24 @@ export function ConnectButton({
     }
   }
 
-  // Always show "Connect Wallet" - handle installation check in the click handler
+  if (variant === "shiny") {
+    return (
+      <LiquidMetalButton
+        label={isConnecting ? "Connecting..." : label}
+        onClick={handleConnect}
+        disabled={isLoading || isConnecting}
+        width={size === "lg" ? 180 : size === "sm" ? 120 : 152}
+      />
+    )
+  }
+
   return (
     <Button
+      variant={variant}
       onClick={handleConnect}
       disabled={isLoading || isConnecting}
       size={size}
-      className="gap-2 px-[18px] py-[10px] rounded-full border border-[#5100fd] bg-[#5100fd]/50 text-white font-medium hover:scale-105 transition-transform duration-500 disabled:opacity-50 disabled:hover:scale-100"
+      className="gap-2 px-5 py-2.5 rounded-full"
     >
       <Wallet className="h-4 w-4" />
       {isConnecting ? "Connecting..." : label}

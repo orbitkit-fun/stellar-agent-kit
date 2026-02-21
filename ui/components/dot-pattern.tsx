@@ -22,6 +22,10 @@ export interface DotPatternProps {
   waveSpeed?: number
   /** When false, pattern is absolute within parent; when true, fixed to viewport */
   fixed?: boolean
+  /** Base opacity range min (0–1). Dots use baseOpacityMin + random * (max - min). */
+  baseOpacityMin?: number
+  /** Base opacity range max (0–1). */
+  baseOpacityMax?: number
 }
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } {
@@ -52,6 +56,8 @@ export function DotPattern({
   glowIntensity = 1,
   waveSpeed = 0.5,
   fixed = true,
+  baseOpacityMin = 0.3,
+  baseOpacityMax = 0.5,
 }: DotPatternProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -92,12 +98,12 @@ export function DotPattern({
         dots.push({
           x: offsetX + col * cellSize,
           y: offsetY + row * cellSize,
-          baseOpacity: 0.3 + Math.random() * 0.2,
+          baseOpacity: baseOpacityMin + Math.random() * (baseOpacityMax - baseOpacityMin),
         })
       }
     }
     dotsRef.current = dots
-  }, [dotSize, gap])
+  }, [dotSize, gap, baseOpacityMin, baseOpacityMax])
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current

@@ -58,19 +58,19 @@ export default function SwapPage() {
               <TabsList className="grid w-full grid-cols-3 mb-6 h-11 items-center bg-zinc-950 border border-zinc-800 p-1.5 rounded-xl transition-colors duration-300">
                 <TabsTrigger
                   value="swap"
-                  className="flex h-full min-h-0 items-center justify-center rounded-lg py-0 text-sm font-medium leading-none transition-all duration-300 ease-out data-[state=inactive]:text-zinc-400 data-[state=inactive]:hover:text-zinc-300 data-[state=active]:bg-[#5100fd] data-[state=active]:text-white"
+                  className="flex h-full min-h-0 items-center justify-center rounded-lg py-0 text-sm font-medium leading-none transition-all duration-300 ease-out data-[state=inactive]:text-zinc-400 data-[state=inactive]:hover:text-zinc-300 data-[state=active]:bg-zinc-600 data-[state=active]:text-white"
                 >
                   Swap
                 </TabsTrigger>
                 <TabsTrigger
                   value="send"
-                  className="flex h-full min-h-0 items-center justify-center rounded-lg py-0 text-sm font-medium leading-none transition-all duration-300 ease-out data-[state=inactive]:text-zinc-400 data-[state=inactive]:hover:text-zinc-300 data-[state=active]:bg-[#5100fd] data-[state=active]:text-white"
+                  className="flex h-full min-h-0 items-center justify-center rounded-lg py-0 text-sm font-medium leading-none transition-all duration-300 ease-out data-[state=inactive]:text-zinc-400 data-[state=inactive]:hover:text-zinc-300 data-[state=active]:bg-zinc-600 data-[state=active]:text-white"
                 >
                   Send
                 </TabsTrigger>
                 <TabsTrigger
                   value="prices"
-                  className="flex h-full min-h-0 items-center justify-center rounded-lg py-0 text-sm font-medium leading-none transition-all duration-300 ease-out data-[state=inactive]:text-zinc-400 data-[state=inactive]:hover:text-zinc-300 data-[state=active]:bg-[#5100fd] data-[state=active]:text-white"
+                  className="flex h-full min-h-0 items-center justify-center rounded-lg py-0 text-sm font-medium leading-none transition-all duration-300 ease-out data-[state=inactive]:text-zinc-400 data-[state=inactive]:hover:text-zinc-300 data-[state=active]:bg-zinc-600 data-[state=active]:text-white"
                 >
                   Prices
                 </TabsTrigger>

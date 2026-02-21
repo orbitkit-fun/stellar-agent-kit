@@ -2,6 +2,7 @@
 
 import React, { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { LiquidMetalButton } from "@/components/ui/liquid-metal-button"
 import { Input } from "@/components/ui/input"
 import { GlowingEffect } from "@/components/ui/glowing-effect"
 import { signTransaction } from "@stellar/freighter-api"
@@ -158,13 +159,12 @@ export function SendInterface() {
             </DropdownMenu>
           </div>
         </div>
-        <Button
+        <LiquidMetalButton
+          label={isLoading ? "Sending..." : "Send"}
           onClick={handleSend}
           disabled={!toAddress.trim() || !amount || isLoading || parseFloat(amount) <= 0}
-          className="w-full h-14 bg-[#5100fd] hover:bg-[#6610ff] text-white font-medium rounded-xl disabled:opacity-50"
-        >
-          {isLoading ? "Sending..." : "Send"}
-        </Button>
+          fullWidth
+        />
       </div>
     </div>
   )

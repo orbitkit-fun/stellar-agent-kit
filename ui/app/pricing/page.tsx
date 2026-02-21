@@ -5,6 +5,8 @@ import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { PageTransition } from "@/components/page-transition"
+import { Button } from "@/components/ui/button"
+import { LiquidMetalButton } from "@/components/ui/liquid-metal-button"
 import { Check } from "lucide-react"
 
 const PLANS = [
@@ -122,7 +124,7 @@ export default function PricingPage() {
                 key={plan.id}
                 className={`rounded-xl border p-6 flex flex-col ${
                   plan.primary
-                    ? "border-[#5100fd] bg-[#5100fd]/5"
+                    ? "border-zinc-600 bg-zinc-800/30"
                     : "border-zinc-800 bg-zinc-900/50"
                 }`}
               >
@@ -149,19 +151,23 @@ export default function PricingPage() {
                     >
                       {plan.cta}
                     </Link>
+                  ) : plan.primary ? (
+                    <LiquidMetalButton
+                      label={loading === plan.id ? "Redirecting…" : plan.cta}
+                      onClick={() => openDodoCheckout(plan.id)}
+                      disabled={!!loading}
+                      fullWidth
+                    />
                   ) : (
-                    <button
+                    <Button
+                      variant="outline"
                       type="button"
                       onClick={() => openDodoCheckout(plan.id)}
                       disabled={!!loading}
-                      className={`inline-flex items-center justify-center w-full rounded-full px-6 py-3 text-sm font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${
-                        plan.primary
-                          ? "border border-[#5100fd] bg-[#5100fd]/50 text-white hover:bg-[#5100fd]/70 hover:border-[#5100fd]"
-                          : "border border-zinc-500 text-white bg-transparent hover:bg-zinc-800/80 hover:border-zinc-400"
-                      }`}
+                      className="w-full rounded-full px-6 py-3"
                     >
                       {loading === plan.id ? "Redirecting…" : plan.cta}
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>

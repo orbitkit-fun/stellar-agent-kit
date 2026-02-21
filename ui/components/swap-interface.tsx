@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
+import { LiquidMetalButton } from "@/components/ui/liquid-metal-button"
 import { Input } from "@/components/ui/input"
 import { GlowingEffect } from "@/components/ui/glowing-effect"
 import { ArrowUpDown, ChevronDown } from "lucide-react"
@@ -330,13 +331,12 @@ export function SwapInterface() {
         )}
 
         {/* Swap Button */}
-        <Button
+        <LiquidMetalButton
+          label={isLoading || soroSwapLoading ? "Getting quote..." : "Swap"}
           onClick={handleSwap}
           disabled={!fromAmount || !toAmount || isLoading || soroSwapLoading || parseFloat(fromAmount) <= 0}
-          className="w-full h-14 bg-[#5100fd] hover:bg-[#6610ff] text-white font-medium rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-[650ms] hover:scale-[1.02]"
-        >
-          {isLoading || soroSwapLoading ? "Getting quote..." : "Swap"}
-        </Button>
+          fullWidth
+        />
 
         {/* Footer */}
         <div className="mt-6 text-center">

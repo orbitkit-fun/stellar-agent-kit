@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { LiquidMetalButton } from "@/components/ui/liquid-metal-button"
 import { ScrambleText } from "@/components/scramble-text"
 
 // 5 protocols integrated in the kit — logos from brand/logos (copied to public/brand/logos)
@@ -76,6 +77,14 @@ export function ProtocolsIntegratedSection() {
         {PROTOCOLS.map((p) => (
           <ProtocolLogo key={p.name} name={p.name} href={p.href} logo={p.logo} />
         ))}
+      </div>
+      <div className="mt-10 text-center">
+        <LiquidMetalButton
+          href="/protocols"
+          label="View all protocols — Try it, get code, or open docs"
+          width={400}
+          className="mx-auto"
+        />
       </div>
     </section>
   )

@@ -43,25 +43,24 @@ export function Navbar() {
     >
       <GlassSurface
         width="100%"
-        height={56}
+        height={64}
         borderRadius={9999}
         backgroundOpacity={0.08}
         saturation={1.2}
         forceDark
         simpleGlass
-        className="px-8 py-3 flex items-center justify-center min-w-0 w-full shadow-lg shadow-black/20"
+        className="px-8 py-4 flex items-center justify-center min-w-0 w-full shadow-lg shadow-black/20"
         contentClassName="p-0 w-full flex items-center justify-center gap-6 min-w-0"
       >
         {/* Centered: Logo + Nav + Wallet */}
         <div className="hidden sm:flex items-center justify-center gap-6 flex-wrap min-w-0">
-          <button
-            type="button"
-            onClick={() => scrollTo("hero")}
+          <Link
+            href="/"
             className="flex items-center gap-2 text-lg font-bold text-white hover:text-zinc-200 transition-colors duration-300 shrink-0"
           >
             <Image src="/brand/orbit/orbit.png" alt="Orbit" width={28} height={28} className="shrink-0" />
             Orbit
-          </button>
+          </Link>
           <span className="hidden md:block w-px h-5 bg-zinc-700 shrink-0" aria-hidden />
           <nav className="flex items-center gap-1" aria-label="Main">
             <Link
@@ -76,13 +75,12 @@ export function Navbar() {
             >
               DevKit
             </Link>
-            <button
-              type="button"
-              onClick={() => scrollTo("capabilities")}
+            <Link
+              href="/protocols"
               className="px-3 py-2 text-sm text-zinc-400 hover:text-white transition-colors duration-300 rounded-md"
             >
-              Capabilities
-            </button>
+              Protocols
+            </Link>
             <Link
               href="/swap"
               className="px-3 py-2 text-sm text-zinc-400 hover:text-white transition-colors duration-300 rounded-md"
@@ -110,14 +108,13 @@ export function Navbar() {
 
         {/* Mobile: logo left, menu right */}
         <div className="flex sm:hidden items-center w-full justify-between">
-          <button
-            type="button"
-            onClick={() => scrollTo("hero")}
+          <Link
+            href="/"
             className="flex items-center gap-2 text-lg font-bold text-white hover:text-zinc-200 transition-colors duration-300"
           >
             <Image src="/brand/orbit/orbit.png" alt="Orbit" width={24} height={24} className="shrink-0" />
             Orbit
-          </button>
+          </Link>
           <MobileMenu />
         </div>
       </GlassSurface>

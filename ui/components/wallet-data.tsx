@@ -4,9 +4,9 @@ import React, { useState } from "react"
 import { useAccount } from "@/hooks/use-account"
 import { useIsMounted } from "@/hooks/use-is-mounted"
 import { ConnectButton } from "./connect-button"
-import { Button } from "@/components/ui/button"
+import { LiquidMetalButton } from "@/components/ui/liquid-metal-button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Copy, ExternalLink, LogOut, ChevronDown } from "lucide-react"
+import { Copy, ExternalLink, LogOut } from "lucide-react"
 import { toast } from "sonner"
 
 export function WalletData() {
@@ -46,19 +46,21 @@ export function WalletData() {
     return <ConnectButton label="Connect Wallet" />
   }
 
+  const connectedLabel =
+    account.displayName.length > 6
+      ? `Connected • ${account.displayName}`
+      : "Connected"
+
   return (
     <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
       <DropdownMenuTrigger asChild>
-        <Button className="gap-2 px-[18px] py-[10px] rounded-full border border-white/20 bg-white/10 text-white font-medium hover:scale-105 transition-transform duration-500 backdrop-blur-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full shrink-0" aria-hidden />
-            <span className="text-sm">Connected</span>
-            {account.displayName.length > 6 && (
-              <span className="font-mono text-xs text-white/80 hidden sm:inline">{account.displayName}</span>
-            )}
-            <ChevronDown className="h-4 w-4 shrink-0" />
-          </div>
-        </Button>
+        <div className="cursor-pointer inline-block" role="button" tabIndex={0}>
+          <LiquidMetalButton
+            label={connectedLabel}
+            width={200}
+            className="shrink-0"
+          />
+        </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
         align="end" 

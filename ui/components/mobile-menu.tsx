@@ -8,6 +8,7 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { LiquidMetalButton } from "@/components/ui/liquid-metal-button"
 import { WalletData } from "./wallet-data"
 
 export function MobileMenu() {
@@ -31,20 +32,13 @@ export function MobileMenu() {
           <div className="pb-4 mb-2 border-b border-zinc-800">
             <WalletData />
           </div>
-          <button
-            type="button"
-            onClick={() => scrollTo("hero")}
+          <Link
+            href="/"
+            onClick={() => setOpen(false)}
             className="text-left py-3 px-3 text-base text-white hover:text-zinc-200 transition-colors duration-500 ease-out"
           >
             Home
-          </button>
-          <button
-            type="button"
-            onClick={() => scrollTo("capabilities")}
-            className="text-left py-3 px-3 text-base text-zinc-300 hover:text-white transition-colors duration-500 ease-out"
-          >
-            Capabilities
-          </button>
+          </Link>
           <span className="mt-2 mb-1 px-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">
             Resources
           </span>
@@ -61,6 +55,13 @@ export function MobileMenu() {
             className="text-left py-3 px-3 text-base text-zinc-400 hover:text-white transition-colors duration-500 ease-out"
           >
             DevKit
+          </Link>
+          <Link
+            href="/protocols"
+            onClick={() => setOpen(false)}
+            className="text-left py-3 px-3 text-base text-zinc-400 hover:text-white transition-colors duration-500 ease-out"
+          >
+            Protocols
           </Link>
           <Link
             href="/swap"
@@ -84,15 +85,13 @@ export function MobileMenu() {
             Pricing
           </Link>
           <div className="mt-4 pt-4 border-t border-zinc-800">
-            <a
+            <LiquidMetalButton
               href="https://github.com/stellar/stellar-agent-kit"
-              target="_blank"
-              rel="noopener noreferrer"
+              label="Get started"
               onClick={() => setOpen(false)}
-              className="block text-center py-3 rounded-lg border border-[#5100fd] bg-[#5100fd]/30 text-[#a78bfa] font-medium hover:bg-[#5100fd]/50 hover:text-white transition-all duration-500 ease-out"
-            >
-              Get started
-            </a>
+              fullWidth
+              width={280}
+            />
           </div>
         </div>
       </SheetContent>

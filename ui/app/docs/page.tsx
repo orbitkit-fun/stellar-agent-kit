@@ -1,19 +1,21 @@
 "use client"
 
 import Link from "next/link"
+import { BookOpen, Key, Box, Terminal, Bot, Network } from "lucide-react"
 import { Navbar } from "@/components/navbar"
 import { PageTransition } from "@/components/page-transition"
 import { DocsSidebar } from "@/components/docs-sidebar"
 import { DocsAssistant } from "@/components/docs-assistant"
+import { BentoCard, BentoGrid } from "@/components/ui/bento-grid"
 
 export default function DocsPage() {
   return (
     <main className="relative min-h-screen bg-black text-white overflow-x-hidden">
       <Navbar />
       <PageTransition>
-        <div className="relative z-20 flex min-h-screen pt-0 pb-8 items-stretch">
+        <div className="relative z-20 flex min-h-screen pt-0 pb-8 items-stretch bg-black">
           <DocsSidebar />
-          <article className="flex-1 min-w-0 pt-28 px-6 md:px-8 lg:px-10 xl:px-12 pb-24">
+          <article className="flex-1 min-w-0 pt-28 px-6 md:px-8 lg:px-10 xl:px-12 pb-24 bg-black">
             <span className="text-[#a78bfa] text-sm font-medium">Introduction</span>
             <header className="mb-10 mt-1">
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white">
@@ -24,41 +26,56 @@ export default function DocsPage() {
               </p>
             </header>
 
-          {/* ─── Guide cards (Mantle-style numbered sections) ────────────── */}
+          {/* ─── Guide cards (Bento grid: left/middle tall, right half-height) ─ */}
           <section className="mb-14">
             <h2 className="sr-only">Documentation guide</h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              <a href="#getting-started" className="group block rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 hover:border-[#5100fd]/50 hover:bg-zinc-900 transition-colors">
-                <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">— 01</span>
-                <h3 className="mt-2 text-xl font-semibold text-white group-hover:text-[#a78bfa] transition-colors">Getting Started</h3>
-                <p className="mt-2 text-sm text-zinc-400 leading-relaxed">Set up the SDK and run your first swap or payment on Stellar.</p>
-              </a>
-              <a href="#x402-stellar-sdk" className="group block rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 hover:border-[#5100fd]/50 hover:bg-zinc-900 transition-colors">
-                <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">— 02</span>
-                <h3 className="mt-2 text-xl font-semibold text-white group-hover:text-[#a78bfa] transition-colors">x402 — Paid API</h3>
-                <p className="mt-2 text-sm text-zinc-400 leading-relaxed">Learn how to set up x402 and create your first paid API endpoint with Stellar.</p>
-              </a>
-              <a href="#stellar-agent-kit" className="group block rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 hover:border-[#5100fd]/50 hover:bg-zinc-900 transition-colors">
-                <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">— 03</span>
-                <h3 className="mt-2 text-xl font-semibold text-white group-hover:text-[#a78bfa] transition-colors">Agent Kit — DeFi</h3>
-                <p className="mt-2 text-sm text-zinc-400 leading-relaxed">Unified SDK for payments, DEX swaps, lending, and oracles on Stellar.</p>
-              </a>
-              <a href="#create-stellar-devkit-app" className="group block rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 hover:border-[#5100fd]/50 hover:bg-zinc-900 transition-colors">
-                <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">— 04</span>
-                <h3 className="mt-2 text-xl font-semibold text-white group-hover:text-[#a78bfa] transition-colors">CLI &amp; Scaffolding</h3>
-                <p className="mt-2 text-sm text-zinc-400 leading-relaxed">Scaffold Agent Kit or x402 API apps in one command.</p>
-              </a>
-              <a href="#stellar-devkit-mcp" className="group block rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 hover:border-[#5100fd]/50 hover:bg-zinc-900 transition-colors">
-                <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">— 05</span>
-                <h3 className="mt-2 text-xl font-semibold text-white group-hover:text-[#a78bfa] transition-colors">MCP</h3>
-                <p className="mt-2 text-sm text-zinc-400 leading-relaxed">MCP server for Cursor/Claude: contract IDs and SDK snippets on demand.</p>
-              </a>
-              <a href="#networks-and-contracts" className="group block rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 hover:border-[#5100fd]/50 hover:bg-zinc-900 transition-colors">
-                <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">— 06</span>
-                <h3 className="mt-2 text-xl font-semibold text-white group-hover:text-[#a78bfa] transition-colors">Networks &amp; Contracts</h3>
-                <p className="mt-2 text-sm text-zinc-400 leading-relaxed">Horizon, Soroban RPC, contract addresses, and asset IDs for Stellar.</p>
-              </a>
-            </div>
+            <BentoGrid className="lg:grid-rows-3">
+              <BentoCard
+                Icon={Box}
+                name="Agent Kit — DeFi"
+                description="Unified SDK for payments, DEX swaps, lending, and oracles on Stellar."
+                href="#stellar-agent-kit"
+                cta="Learn more"
+                background={<img className="absolute -top-20 -right-20 opacity-60" />}
+                className="lg:row-start-1 lg:row-end-4 lg:col-start-2 lg:col-end-3"
+              />
+              <BentoCard
+                Icon={BookOpen}
+                name="Getting Started"
+                description="Set up the SDK and run your first swap or payment on Stellar."
+                href="#getting-started"
+                cta="Learn more"
+                background={<img className="absolute -top-20 -right-20 opacity-60" />}
+                className="lg:col-start-1 lg:col-end-2 lg:row-start-1 lg:row-end-3"
+              />
+              <BentoCard
+                Icon={Key}
+                name="x402 — Paid API"
+                description="Learn how to set up x402 and create your first paid API endpoint with Stellar."
+                href="#x402-stellar-sdk"
+                cta="Learn more"
+                background={<img className="absolute -top-20 -right-20 opacity-60" />}
+                className="lg:col-start-1 lg:col-end-2 lg:row-start-3 lg:row-end-4"
+              />
+              <BentoCard
+                Icon={Bot}
+                name="MCP"
+                description="MCP server for Cursor/Claude: contract IDs and SDK snippets on demand."
+                href="#stellar-devkit-mcp"
+                cta="Learn more"
+                background={<img className="absolute -top-20 -right-20 opacity-60" />}
+                className="lg:col-start-3 lg:col-end-3 lg:row-start-1 lg:row-end-2"
+              />
+              <BentoCard
+                Icon={Terminal}
+                name="CLI & Scaffolding"
+                description="Scaffold Agent Kit or x402 API apps in one command."
+                href="#create-stellar-devkit-app"
+                cta="Learn more"
+                background={<img className="absolute -top-20 -right-20 opacity-60" />}
+                className="lg:col-start-3 lg:col-end-3 lg:row-start-2 lg:row-end-4"
+              />
+            </BentoGrid>
           </section>
 
           {/* ─── Overview ───────────────────────────────────────────────── */}
@@ -560,8 +577,8 @@ npx create-stellar-devkit-app my-app --skip-install`}
             </p>
           </section>
         </article>
-        <aside className="w-96 min-w-80 shrink-0 hidden lg:flex self-stretch flex-col min-h-screen border-l border-zinc-800">
-          <div className="pt-28 flex-1 min-h-0 flex flex-col overflow-hidden">
+        <aside className="w-96 min-w-80 max-w-[24rem] shrink-0 hidden lg:flex flex-col h-screen sticky top-0 pt-14 border-l border-zinc-800 bg-black">
+          <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
             <DocsAssistant />
           </div>
         </aside>

@@ -3,13 +3,14 @@
 import Link from "next/link"
 import Image from "next/image"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { CircleArrowRight, ArrowRight, Code2, Wallet, Zap, Bot, Github, Scale, ArrowLeftRight, Lock, MessageCircle, Cpu, CheckCircle } from "lucide-react"
+import { CircleArrowRight, Code2, Wallet, Zap, Bot, Github, Scale, ArrowLeftRight, Lock, MessageCircle, Cpu, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { LiquidMetalButton } from "@/components/ui/liquid-metal-button"
 import { Navbar } from "@/components/navbar"
 import { PageTransition } from "@/components/page-transition"
 import { ProtocolsIntegratedSection } from "@/components/protocols-integrated"
 import { ScrambleText } from "@/components/scramble-text"
-import { FeatureCard } from "@/components/feature-card"
+import { BentoCard, BentoGrid } from "@/components/ui/bento-grid"
 import { DotPattern } from "@/components/dot-pattern"
 
 export default function Home() {
@@ -26,12 +27,14 @@ export default function Home() {
       <div className="relative min-h-[85vh] w-full">
         <DotPattern
           fixed={false}
-          baseColor="#3f3f46"
+          baseColor="#52525b"
           glowColor="#a78bfa"
           gap={20}
-          dotSize={1.5}
+          dotSize={2.5}
           proximity={140}
           waveSpeed={0.4}
+          baseOpacityMin={0.45}
+          baseOpacityMax={0.7}
         />
         <div id="hero" className="relative z-20 container mx-auto px-6 lg:px-12 pt-32 pb-40 min-h-[85vh] flex flex-col items-center justify-center text-center">
           <div className="flex flex-col items-center max-w-3xl mx-auto w-full">
@@ -98,36 +101,53 @@ export default function Home() {
             </h2>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <FeatureCard
-              icon={<Code2 className="h-5 w-5" strokeWidth={2} />}
-              label="Unified SDK"
-              title="Stellar Agent Kit"
-              description="Payments, DEX quotes & swaps (SoroSwap), lending (Blend), oracles (Reflector)."
-              href="/docs#stellar-agent-kit"
-            />
-            <FeatureCard
-              icon={<Wallet className="h-5 w-5" strokeWidth={2} />}
-              label="Monetization"
-              title="x402 Stellar SDK"
-              description="HTTP 402 middleware and x402Fetch. Monetize APIs with Stellar."
-              href="/docs#x402-stellar-sdk"
-            />
-            <FeatureCard
-              icon={<Zap className="h-5 w-5" strokeWidth={2} />}
-              label="Scaffolding"
-              title="Create DevKit App"
+          <BentoGrid className="lg:grid-rows-3">
+            <BentoCard
+              Icon={Zap}
+              name="Create DevKit App"
               description="Scaffold Agent Kit or x402 API in one command. Copy .env and run."
               href="/docs#create-stellar-devkit-app"
+              cta="Learn more"
+              background={<img className="absolute -top-20 -right-20 opacity-60" />}
+              className="lg:row-start-1 lg:row-end-4 lg:col-start-2 lg:col-end-3"
             />
-            <FeatureCard
-              icon={<Bot className="h-5 w-5" strokeWidth={2} />}
-              label="MCP Server"
-              title="Stellar DevKit MCP"
+            <BentoCard
+              Icon={Code2}
+              name="Stellar Agent Kit"
+              description="Payments, DEX quotes & swaps (SoroSwap), lending (Blend), oracles (Reflector)."
+              href="/docs#stellar-agent-kit"
+              cta="Learn more"
+              background={<img className="absolute -top-20 -right-20 opacity-60" />}
+              className="lg:col-start-1 lg:col-end-2 lg:row-start-1 lg:row-end-3"
+            />
+            <BentoCard
+              Icon={Wallet}
+              name="x402 Stellar SDK"
+              description="HTTP 402 middleware and x402Fetch. Monetize APIs with Stellar."
+              href="/docs#x402-stellar-sdk"
+              cta="Learn more"
+              background={<img className="absolute -top-20 -right-20 opacity-60" />}
+              className="lg:col-start-1 lg:col-end-2 lg:row-start-3 lg:row-end-4"
+            />
+            <BentoCard
+              Icon={Bot}
+              name="Stellar DevKit MCP"
               description="Contract IDs, SDK snippets, live quotes. Cursor and Claude."
               href="/devkit"
+              cta="Learn more"
+              background={<img className="absolute -top-20 -right-20 opacity-60" />}
+              className="lg:col-start-3 lg:col-end-3 lg:row-start-1 lg:row-end-2"
             />
-          </div>
+            <BentoCard
+              Icon={CheckCircle}
+              name="Notifications"
+              description="Get notified when someone shares a file or mentions you in a comment."
+              href="/docs"
+              cta="Learn more"
+              background={<img className="absolute -top-20 -right-20 opacity-60" />}
+              className="lg:col-start-3 lg:col-end-3 lg:row-start-2 lg:row-end-4"
+            />
+          </BentoGrid>
 
           {/* Protocols Integrated — 5 protocols from the kit */}
           <ProtocolsIntegratedSection />
@@ -137,12 +157,14 @@ export default function Home() {
             <div className="absolute inset-0 -z-10">
               <DotPattern
                 fixed={false}
-                baseColor="#27272a"
+                baseColor="#3f3f46"
                 glowColor="#a78bfa"
                 gap={22}
-                dotSize={1.5}
+                dotSize={2.5}
                 proximity={100}
                 waveSpeed={0.3}
+                baseOpacityMin={0.45}
+                baseOpacityMax={0.7}
               />
             </div>
             <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center relative z-10">
@@ -180,17 +202,11 @@ export default function Home() {
                 <p className="text-zinc-400 text-lg mb-8 max-w-md" style={{ fontFamily: "var(--font-space-grotesk)" }}>
                   Run the SDK in Node or the browser. Get a quote, build a swap, then sign with Freighter or the CLI.
                 </p>
-                <Button
-                  asChild
-                  variant="outline"
-                  size="lg"
-                  className="rounded-full border-zinc-600 bg-zinc-900/80 text-white hover:bg-zinc-800 hover:border-zinc-500 hover:text-white px-8 py-6 text-base font-medium"
-                >
-                  <Link href="/docs#quick-start" className="inline-flex items-center gap-2">
-                    <Github className="h-5 w-5 shrink-0" />
-                    Take me to the code &gt;&gt;
-                  </Link>
-                </Button>
+                <LiquidMetalButton
+                  href="/docs#quick-start"
+                  label="Take me to the code >>"
+                  width={220}
+                />
               </div>
             </div>
           </section>
@@ -209,86 +225,112 @@ export default function Home() {
 
           <Tabs defaultValue="tools" className="w-full">
             <TabsList className="bg-zinc-950 border border-zinc-800 p-1 mb-8 rounded-full">
-              <TabsTrigger value="tools" className="text-zinc-500 data-[state=active]:bg-[#5100fd] data-[state=active]:text-white px-8 py-3 rounded-full transition-all">
+              <TabsTrigger value="tools" className="text-zinc-500 data-[state=active]:bg-zinc-600 data-[state=active]:text-white px-8 py-3 rounded-full transition-all">
                 Agent tools
               </TabsTrigger>
-              <TabsTrigger value="flow" className="text-zinc-500 data-[state=active]:bg-[#5100fd] data-[state=active]:text-white px-8 py-3 rounded-full transition-all">
+              <TabsTrigger value="flow" className="text-zinc-500 data-[state=active]:bg-zinc-600 data-[state=active]:text-white px-8 py-3 rounded-full transition-all">
                 How it works
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="tools" className="mt-8">
-              <div className="grid gap-6 md:grid-cols-2">
-                <FeatureCard
-                  icon={<Scale className="h-5 w-5" strokeWidth={2} />}
-                  label="Balance"
-                  title="Check balance"
-                  description="Get native + trustline balances via Horizon. Use agent.getBalances() or the CLI."
-                  href="/docs#stellar-agent-kit"
-                  cta="Docs"
-                />
-                <FeatureCard
-                  icon={<ArrowLeftRight className="h-5 w-5" strokeWidth={2} />}
-                  label="DEX"
-                  title="Swap assets"
-                  description="DEX swaps via SoroSwap. dexGetQuote + dexSwap, or try the in-browser Swap with Freighter."
-                  href="/swap"
-                  cta="Try Swap"
-                />
-                <FeatureCard
-                  icon={<Wallet className="h-5 w-5" strokeWidth={2} />}
-                  label="Payments"
-                  title="Payments & path payments"
+              <BentoGrid className="lg:grid-rows-3">
+                <BentoCard
+                  Icon={Wallet}
+                  name="Payments & path payments"
                   description="Send XLM or custom assets; create accounts; path payments via StellarAgentKit or CLI pay."
                   href="/docs#stellar-agent-kit"
-                  cta="Docs"
+                  cta="Learn more"
+                  background={<img className="absolute -top-20 -right-20 opacity-60" />}
+                  className="lg:row-start-1 lg:row-end-4 lg:col-start-2 lg:col-end-3"
                 />
-                <FeatureCard
-                  icon={<Lock className="h-5 w-5" strokeWidth={2} />}
-                  label="x402"
-                  title="Paywalled APIs"
+                <BentoCard
+                  Icon={Scale}
+                  name="Check balance"
+                  description="Get native + trustline balances via Horizon. Use agent.getBalances() or the CLI."
+                  href="/docs#stellar-agent-kit"
+                  cta="Learn more"
+                  background={<img className="absolute -top-20 -right-20 opacity-60" />}
+                  className="lg:col-start-1 lg:col-end-2 lg:row-start-1 lg:row-end-3"
+                />
+                <BentoCard
+                  Icon={ArrowLeftRight}
+                  name="Swap assets"
+                  description="DEX swaps via SoroSwap. dexGetQuote + dexSwap, or try the in-browser Swap with Freighter."
+                  href="/swap"
+                  cta="Learn more"
+                  background={<img className="absolute -top-20 -right-20 opacity-60" />}
+                  className="lg:col-start-1 lg:col-end-2 lg:row-start-3 lg:row-end-4"
+                />
+                <BentoCard
+                  Icon={Lock}
+                  name="Paywalled APIs"
                   description="Protect routes with Stellar payment. Server returns 402; client pays with x402Fetch and payWithStellar."
                   href="/docs#x402-stellar-sdk"
-                  cta="Docs"
+                  cta="Learn more"
+                  background={<img className="absolute -top-20 -right-20 opacity-60" />}
+                  className="lg:col-start-3 lg:col-end-3 lg:row-start-1 lg:row-end-2"
                 />
-              </div>
+                <BentoCard
+                  Icon={CheckCircle}
+                  name="Notifications"
+                  description="Get notified when someone shares a file or mentions you in a comment."
+                  href="/docs"
+                  cta="Learn more"
+                  background={<img className="absolute -top-20 -right-20 opacity-60" />}
+                  className="lg:col-start-3 lg:col-end-3 lg:row-start-2 lg:row-end-4"
+                />
+              </BentoGrid>
             </TabsContent>
 
             <TabsContent value="flow" className="mt-8">
-              <div className="grid gap-6 md:grid-cols-2">
-                <FeatureCard
-                  icon={<MessageCircle className="h-5 w-5" strokeWidth={2} />}
-                  label="Step 1"
-                  title="You ask"
-                  description={'In Chat or CLI: "Swap 0.2 XLM to USDC", "Check my balance", or "Get a quote for 10 XLM → USDC".'}
-                  href="/chat"
-                  cta="Open Chat"
-                />
-                <FeatureCard
-                  icon={<Cpu className="h-5 w-5" strokeWidth={2} />}
-                  label="Step 2"
-                  title="Agent picks the tool"
-                  description="The LLM maps your request to a tool: check_balance, swap_asset, get_swap_quote, create_trustline."
-                  href="/devkit"
-                  cta="DevKit"
-                />
-                <FeatureCard
-                  icon={<Zap className="h-5 w-5" strokeWidth={2} />}
-                  label="Step 3"
-                  title="Tool runs on Stellar"
+              <BentoGrid className="lg:grid-rows-3">
+                <BentoCard
+                  Icon={Zap}
+                  name="Tool runs on Stellar"
                   description="Horizon, Soroban RPC, SoroSwap. Quote → build tx → you sign (Freighter or CLI) → submit."
                   href="/docs#cli"
-                  cta="CLI docs"
+                  cta="Learn more"
+                  background={<img className="absolute -top-20 -right-20 opacity-60" />}
+                  className="lg:row-start-1 lg:row-end-4 lg:col-start-2 lg:col-end-3"
                 />
-                <FeatureCard
-                  icon={<CheckCircle className="h-5 w-5" strokeWidth={2} />}
-                  label="Step 4"
-                  title="Result in chat or your app"
+                <BentoCard
+                  Icon={MessageCircle}
+                  name="You ask"
+                  description={'In Chat or CLI: "Swap 0.2 XLM to USDC", "Check my balance", or "Get a quote for 10 XLM → USDC".'}
+                  href="/chat"
+                  cta="Learn more"
+                  background={<img className="absolute -top-20 -right-20 opacity-60" />}
+                  className="lg:col-start-1 lg:col-end-2 lg:row-start-1 lg:row-end-3"
+                />
+                <BentoCard
+                  Icon={Cpu}
+                  name="Agent picks the tool"
+                  description="The LLM maps your request to a tool: check_balance, swap_asset, get_swap_quote, create_trustline."
+                  href="/devkit"
+                  cta="Learn more"
+                  background={<img className="absolute -top-20 -right-20 opacity-60" />}
+                  className="lg:col-start-1 lg:col-end-2 lg:row-start-3 lg:row-end-4"
+                />
+                <BentoCard
+                  Icon={CheckCircle}
+                  name="Result in chat or your app"
                   description="Balances, swap confirmation, trustline created, or a quote. Same flow in your own app."
                   href="/docs"
-                  cta="Full docs"
+                  cta="Learn more"
+                  background={<img className="absolute -top-20 -right-20 opacity-60" />}
+                  className="lg:col-start-3 lg:col-end-3 lg:row-start-1 lg:row-end-2"
                 />
-              </div>
+                <BentoCard
+                  Icon={Scale}
+                  name="Notifications"
+                  description="Get notified when someone shares a file or mentions you in a comment."
+                  href="/docs"
+                  cta="Learn more"
+                  background={<img className="absolute -top-20 -right-20 opacity-60" />}
+                  className="lg:col-start-3 lg:col-end-3 lg:row-start-2 lg:row-end-4"
+                />
+              </BentoGrid>
             </TabsContent>
           </Tabs>
 
@@ -297,15 +339,9 @@ export default function Home() {
             <Link href="/docs" className="rounded-full border border-zinc-600 bg-zinc-900/50 text-white px-6 py-3 text-sm font-medium hover:bg-zinc-800 hover:border-zinc-500 transition-all">
               Docs
             </Link>
-            <Link href="/swap" className="rounded-full border border-zinc-600 bg-zinc-900/50 text-white px-6 py-3 text-sm font-medium hover:bg-zinc-800 hover:border-zinc-500 transition-all">
-              Try Swap
-            </Link>
-            <Link href="/devkit" className="rounded-full border border-zinc-600 bg-zinc-900/50 text-white px-6 py-3 text-sm font-medium hover:bg-zinc-800 hover:border-zinc-500 transition-all">
-              DevKit
-            </Link>
-            <Link href="/pricing" className="rounded-full bg-[#5100fd] text-white px-6 py-3 text-sm font-medium hover:bg-[#6610ff] transition-all">
-              Pricing
-            </Link>
+            <LiquidMetalButton href="/swap" label="Try Swap" width={120} />
+            <LiquidMetalButton href="/devkit" label="DevKit" width={100} />
+            <LiquidMetalButton href="/pricing" label="Pricing" width={110} />
           </div>
         </div>
       </section>

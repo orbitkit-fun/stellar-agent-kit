@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { Plus, ChevronDown, ArrowUp, X } from "lucide-react"
+import { LiquidMetalButton } from "@/components/ui/liquid-metal-button"
 import { signTransaction } from "@stellar/freighter-api"
 import { Networks } from "@stellar/stellar-sdk"
 import { useAccount } from "@/hooks/use-account"
@@ -134,7 +135,7 @@ export function AgentChat() {
               <div
                 className={`max-w-[85%] rounded-xl px-4 py-2.5 text-sm ${
                   m.role === "user"
-                    ? "bg-[#5100fd] text-white"
+                    ? "bg-zinc-600 text-white"
                     : "bg-zinc-800/90 text-zinc-200 border border-zinc-700"
                 }`}
               >
@@ -199,14 +200,15 @@ export function AgentChat() {
                 <ChevronDown className="w-4 h-4 text-zinc-500" />
               </button>
             </div>
-            <button
+            <LiquidMetalButton
               type="submit"
+              viewMode="icon"
               disabled={loading || !input.trim()}
-              className="p-2.5 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-zinc-300 hover:text-white disabled:opacity-50 disabled:pointer-events-none transition-all"
-              aria-label="Send"
+              width={46}
+              className="shrink-0"
             >
-              <ArrowUp className="w-4 h-4" />
-            </button>
+              <ArrowUp className="w-4 h-4 text-white" />
+            </LiquidMetalButton>
           </div>
         </form>
       </div>
@@ -225,14 +227,12 @@ export function AgentChat() {
             >
               Dismiss
             </button>
-            <button
-              type="button"
+            <LiquidMetalButton
+              label={swapLoading ? "Building…" : "Approve swap"}
               onClick={executePendingSwap}
               disabled={swapLoading}
-              className="px-4 py-2 rounded-lg text-sm font-medium bg-[#5100fd] text-white hover:bg-[#6100ff] disabled:opacity-50 transition-colors"
-            >
-              {swapLoading ? "Building…" : "Approve swap"}
-            </button>
+              width={140}
+            />
           </div>
         </div>
       )}

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { ExternalLink, Copy, Check, ChevronDown, ChevronUp, Code2, ArrowLeftRight, Landmark, LineChart, Layers, Link2, Vote } from "lucide-react"
 import { Navbar } from "@/components/navbar"
 import { PageTransition } from "@/components/page-transition"
@@ -9,6 +10,9 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
+import { Button } from "@/components/ui/button"
+import { LiquidMetalButton } from "@/components/ui/liquid-metal-button"
+import { BentoGrid } from "@/components/ui/bento-grid"
 
 // Contract IDs from stellar-agent-kit + protocol docs (mainnet)
 const SOROSWAP_AGGREGATOR = "CAG5LRYQ5JVEUI5TEID72EYOVX44TTUJT5BQR2J6J77FH65PCCFAJDDH"
@@ -31,6 +35,8 @@ type Protocol = {
   contractId: string | null
   methods: string[]
   icon: React.ReactNode
+  /** Primary CTA: "Try it" (in-app) or "Get code" / "Docs" (external). Every protocol is ready to use. */
+  primaryAction: { label: string; href: string; external?: boolean }
 }
 
 const PROTOCOLS: Protocol[] = [
@@ -45,6 +51,7 @@ const PROTOCOLS: Protocol[] = [
     contractId: SOROSWAP_AGGREGATOR,
     methods: ["dexGetQuote()", "dexSwap()", "dexSwapExactIn()"],
     icon: <ArrowLeftRight className="h-6 w-6 text-[#a78bfa]" />,
+    primaryAction: { label: "Try it", href: "/swap" },
   },
   {
     id: "blend",
@@ -57,6 +64,7 @@ const PROTOCOLS: Protocol[] = [
     contractId: BLEND_POOL_MAINNET,
     methods: ["lendingSupply()", "lendingBorrow()"],
     icon: <Landmark className="h-6 w-6 text-[#a78bfa]" />,
+    primaryAction: { label: "Get code", href: "/devkit?tab=codegen" },
   },
   {
     id: "allbridge",
@@ -69,6 +77,7 @@ const PROTOCOLS: Protocol[] = [
     contractId: null,
     methods: ["send()", "rawTxBuilder.send()", "getBalanceLine()", "buildChangeTrustLineXdrTx()"],
     icon: <Link2 className="h-6 w-6 text-[#a78bfa]" />,
+    primaryAction: { label: "SDK guide", href: "https://docs-core.allbridge.io/sdk/guides/stellar", external: true },
   },
   {
     id: "fxdao",
@@ -81,6 +90,7 @@ const PROTOCOLS: Protocol[] = [
     contractId: FXDAO_VAULTS_MAINNET,
     methods: ["Vaults (collateral)", "Locking Pool", "USDx / EURx / GBPx", "FXG governance"],
     icon: <Vote className="h-6 w-6 text-[#a78bfa]" />,
+    primaryAction: { label: "Docs", href: "https://fxdao.io/docs", external: true },
   },
   {
     id: "phoenix",
@@ -93,6 +103,7 @@ const PROTOCOLS: Protocol[] = [
     contractId: SOROSWAP_AGGREGATOR,
     methods: ["dexGetQuote()", "dexSwap()", "dexSwapExactIn()"],
     icon: <Layers className="h-6 w-6 text-[#a78bfa]" />,
+    primaryAction: { label: "Try it", href: "/swap" },
   },
   {
     id: "reflector",
@@ -105,6 +116,7 @@ const PROTOCOLS: Protocol[] = [
     contractId: REFLECTOR_DEX,
     methods: ["getPrice()"],
     icon: <LineChart className="h-6 w-6 text-[#a78bfa]" />,
+    primaryAction: { label: "Try it", href: "/swap?tab=prices" },
   },
   {
     id: "aqua",
@@ -117,6 +129,7 @@ const PROTOCOLS: Protocol[] = [
     contractId: SOROSWAP_AGGREGATOR,
     methods: ["dexGetQuote()", "dexSwap()", "dexSwapExactIn()"],
     icon: <Layers className="h-6 w-6 text-[#a78bfa]" />,
+    primaryAction: { label: "Try it", href: "/swap" },
   },
 ]
 
@@ -147,11 +160,12 @@ function ContractCopy({ contractId }: { contractId: string }) {
 
 function ProtocolCard({ protocol }: { protocol: Protocol }) {
   const [open, setOpen] = useState(true)
+  const action = protocol.primaryAction
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 flex flex-col shadow-lg">
+    <div className="group relative col-span-1 flex flex-col justify-between overflow-hidden rounded-xl transition-all duration-300 border border-zinc-800 bg-zinc-900/40 hover:border-zinc-600 hover:bg-zinc-900/70 p-6">
       <div className="flex items-start justify-between gap-4 mb-3">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-zinc-800 border border-zinc-700">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zinc-800/80 border border-zinc-700 text-[#a78bfa] [&_svg]:h-6 [&_svg]:w-6">
             {protocol.icon}
           </div>
           <div className="min-w-0">
@@ -181,6 +195,18 @@ function ProtocolCard({ protocol }: { protocol: Protocol }) {
       <p className="text-sm text-zinc-400 leading-relaxed mb-4">
         {protocol.description}
       </p>
+      {/* Primary CTA: every protocol is ready to use */}
+      {action && (
+        <div className="mb-4">
+          <LiquidMetalButton
+            href={action.href}
+            label={action.label}
+            width={action.external ? 160 : 140}
+            target={action.external ? "_blank" : undefined}
+            rel={action.external ? "noopener noreferrer" : undefined}
+          />
+        </div>
+      )}
 
       <Collapsible open={open} onOpenChange={setOpen}>
         <CollapsibleTrigger asChild>
@@ -225,6 +251,14 @@ function ProtocolCard({ protocol }: { protocol: Protocol }) {
       </Collapsible>
     </div>
   )
+}
+
+// Code Generator: only protocols we have integrated (stellar-agent-kit)
+const INTEGRATED_CODE_PROTOCOL_IDS = ["soroswap", "blend", "reflector"] as const
+const CODE_GEN_TRY_IT: Record<string, string> = {
+  soroswap: "/swap",
+  blend: "/swap",
+  reflector: "/swap?tab=prices",
 }
 
 // Code Generator tab — protocol-scoped snippets
@@ -318,9 +352,13 @@ const contract = new Contract(FXDAO_VAULTS);
 }
 
 function CodeGeneratorTab() {
-  const [selected, setSelected] = useState<string>("soroswap")
+  const integratedKeys = Object.keys(CODE_BY_PROTOCOL).filter((key) =>
+    INTEGRATED_CODE_PROTOCOL_IDS.includes(key as (typeof INTEGRATED_CODE_PROTOCOL_IDS)[number])
+  )
+  const [selected, setSelected] = useState<string>(integratedKeys[0] ?? "soroswap")
   const [copied, setCopied] = useState(false)
   const block = CODE_BY_PROTOCOL[selected]
+  const tryItHref = CODE_GEN_TRY_IT[selected]
   const handleCopy = () => {
     if (block) {
       navigator.clipboard.writeText(block.code)
@@ -334,14 +372,14 @@ function CodeGeneratorTab() {
         Copy-paste examples per protocol. Use with <code className="rounded bg-zinc-800 px-1">stellar-agent-kit</code> and your <code className="rounded bg-zinc-800 px-1">SECRET_KEY</code> + <code className="rounded bg-zinc-800 px-1">SOROSWAP_API_KEY</code> (for DEX).
       </p>
       <div className="flex flex-wrap gap-2">
-        {Object.keys(CODE_BY_PROTOCOL).map((key) => (
+        {integratedKeys.map((key) => (
           <button
             key={key}
             type="button"
             onClick={() => setSelected(key)}
             className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
               selected === key
-                ? "bg-[#5100fd] text-white"
+                ? "bg-zinc-600 text-white"
                 : "border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-white"
             }`}
           >
@@ -351,16 +389,26 @@ function CodeGeneratorTab() {
       </div>
       {block && (
         <div className="rounded-xl border border-zinc-800 bg-zinc-950 overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
+          <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-zinc-800">
             <span className="text-sm text-zinc-500 font-mono">{block.filename}</span>
-            <button
-              type="button"
-              onClick={handleCopy}
-              className="flex items-center gap-2 rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
-            >
-              {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-              {copied ? "Copied" : "Copy"}
-            </button>
+            <div className="flex items-center gap-2">
+              {tryItHref && (
+                <Link
+                  href={tryItHref}
+                  className="inline-flex items-center gap-1 rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
+                >
+                  Try it <ExternalLink className="h-3.5 w-3.5" />
+                </Link>
+              )}
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="flex items-center gap-2 rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
+              >
+                {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                {copied ? "Copied" : "Copy"}
+              </button>
+            </div>
           </div>
           <pre className="p-4 text-xs text-zinc-400 overflow-x-auto max-h-80 overflow-y-auto font-mono leading-relaxed whitespace-pre">
             <code>{block.code}</code>
@@ -395,7 +443,7 @@ export default function ProtocolsPage() {
                 onClick={() => setTab("explorer")}
                 className={`rounded-full px-6 py-3 text-sm font-medium transition-all ${
                   tab === "explorer"
-                    ? "bg-[#5100fd]/20 border border-[#5100fd] text-white"
+                    ? "bg-zinc-800/50 border border-zinc-600 text-white"
                     : "border border-zinc-700 text-zinc-400 hover:bg-zinc-800/50 hover:text-white"
                 }`}
               >
@@ -406,7 +454,7 @@ export default function ProtocolsPage() {
                 onClick={() => setTab("code")}
                 className={`rounded-full px-6 py-3 text-sm font-medium transition-all ${
                   tab === "code"
-                    ? "bg-[#5100fd]/20 border border-[#5100fd] text-white"
+                    ? "bg-zinc-800/50 border border-zinc-600 text-white"
                     : "border border-zinc-700 text-zinc-400 hover:bg-zinc-800/50 hover:text-white"
                 }`}
               >
@@ -415,11 +463,11 @@ export default function ProtocolsPage() {
             </div>
 
             {tab === "explorer" && (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-2 gap-6">
+              <BentoGrid className="sm:grid-cols-2 lg:grid-cols-2">
                 {PROTOCOLS.map((protocol) => (
                   <ProtocolCard key={protocol.id} protocol={protocol} />
                 ))}
-              </div>
+              </BentoGrid>
             )}
 
             {tab === "code" && (

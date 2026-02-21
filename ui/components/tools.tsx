@@ -46,7 +46,7 @@ function Integrations() {
           {integrations.map((item, i) => (
             <li key={i}>
               <a href={item.href} target="_blank" rel="noopener noreferrer" className="block h-full">
-                <Card className="p-6 bg-zinc-900/50 border-zinc-800 hover:border-[#5100fd]/50 transition-colors h-full group">
+                <Card className="p-6 bg-zinc-900/50 border-zinc-800 hover:border-zinc-600 transition-colors h-full group">
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="text-lg font-medium text-white group-hover:text-[#a78bfa] transition-colors">
                       {item.title}

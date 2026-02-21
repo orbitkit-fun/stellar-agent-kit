@@ -17,6 +17,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { LiquidMetalButton } from '@/components/ui/liquid-metal-button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
@@ -92,9 +93,12 @@ export function X402PaymentModal({
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={!txHash.trim()}>
-                Submit &amp; retry
-              </Button>
+              <LiquidMetalButton
+                type="submit"
+                label="Submit & retry"
+                disabled={!txHash.trim()}
+                width={140}
+              />
             </DialogFooter>
           </form>
         )}

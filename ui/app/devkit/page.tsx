@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import {
   LayoutDashboard,
@@ -22,6 +23,7 @@ import {
 } from "lucide-react"
 import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
+import { LiquidMetalButton } from "@/components/ui/liquid-metal-button"
 import { Input } from "@/components/ui/input"
 import { PageTransition } from "@/components/page-transition"
 
@@ -74,19 +76,32 @@ const DEFI_PROTOCOLS = [
   },
 ] as const
 
-// ─── Code generator options (Code generator tab) ───────────────────────────
+// ─── Code generator: only operations we have integrated (stellar-agent-kit + x402) ─
+const INTEGRATED_CODE_GEN_KEYS = [
+  "swap",
+  "quote",
+  "sendPayment",
+  "x402Server",
+  "x402Client",
+  "oneShotSwap",
+  "fullSetup",
+  "getPrice",
+  "lendingSupply",
+  "lendingBorrow",
+] as const
+
 const PROTOCOLS = [
-  { id: "swap-soroswap", title: "Swap on SoroSwap", codeKey: "swap", tryItHref: "/swap" as string | null },
-  { id: "get-quote", title: "Get swap quote", codeKey: "quote", tryItHref: "/swap" as string | null },
-  { id: "send-payment", title: "Send payment", codeKey: "sendPayment", tryItHref: "/swap?tab=send" as string | null },
-  { id: "x402-server", title: "x402 payment-gated API", codeKey: "x402Server", tryItHref: null },
-  { id: "x402-client", title: "x402 client (pay with Stellar)", codeKey: "x402Client", tryItHref: null },
-  { id: "one-shot-swap", title: "One-shot swap (dexSwapExactIn)", codeKey: "oneShotSwap", tryItHref: "/swap" as string | null },
-  { id: "full-setup", title: "Full setup example", codeKey: "fullSetup", tryItHref: "/swap" as string | null },
-  { id: "oracle-reflector", title: "Get price (Reflector oracle)", codeKey: "getPrice", tryItHref: null },
-  { id: "lending-blend-supply", title: "Lending: supply (Blend)", codeKey: "lendingSupply", tryItHref: null },
-  { id: "lending-blend-borrow", title: "Lending: borrow (Blend)", codeKey: "lendingBorrow", tryItHref: null },
-]
+  { id: "swap-soroswap", title: "Swap on SoroSwap", codeKey: "swap", tryItHref: "/swap" },
+  { id: "get-quote", title: "Get swap quote", codeKey: "quote", tryItHref: "/swap" },
+  { id: "send-payment", title: "Send payment", codeKey: "sendPayment", tryItHref: "/swap?tab=send" },
+  { id: "x402-server", title: "x402 payment-gated API", codeKey: "x402Server", tryItHref: "/docs#x402-stellar-sdk" },
+  { id: "x402-client", title: "x402 client (pay with Stellar)", codeKey: "x402Client", tryItHref: "/docs#x402-stellar-sdk" },
+  { id: "one-shot-swap", title: "One-shot swap (dexSwapExactIn)", codeKey: "oneShotSwap", tryItHref: "/swap" },
+  { id: "full-setup", title: "Full setup example", codeKey: "fullSetup", tryItHref: "/swap" },
+  { id: "oracle-reflector", title: "Get price (Reflector oracle)", codeKey: "getPrice", tryItHref: "/swap?tab=prices" },
+  { id: "lending-blend-supply", title: "Lending: supply (Blend)", codeKey: "lendingSupply", tryItHref: "/swap" },
+  { id: "lending-blend-borrow", title: "Lending: borrow (Blend)", codeKey: "lendingBorrow", tryItHref: "/swap" },
+].filter((p) => INTEGRATED_CODE_GEN_KEYS.includes(p.codeKey as (typeof INTEGRATED_CODE_GEN_KEYS)[number]))
 
 // ─── Code generator snippets (from your SDKs) ─────────────────────────────
 const CODE_SNIPPETS: Record<string, { filename: string; code: string }> = {
@@ -242,7 +257,30 @@ function generateAppId(): string {
   return Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join("")
 }
 
+const DEVKIT_TABS = ["overview", "protocols", "codegen", "mcp"] as const
+type DevKitTab = (typeof DEVKIT_TABS)[number]
+
 export default function DevKitPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get("tab")
+  const initialTab: DevKitTab = DEVKIT_TABS.includes(tabParam as DevKitTab) ? (tabParam as DevKitTab) : "overview"
+  const [activeTab, setActiveTab] = useState<DevKitTab>(initialTab)
+
+  useEffect(() => {
+    const t = DEVKIT_TABS.includes(tabParam as DevKitTab) ? (tabParam as DevKitTab) : "overview"
+    setActiveTab(t)
+  }, [tabParam])
+
+  const onTabChange = (value: string) => {
+    const next = (DEVKIT_TABS.includes(value as DevKitTab) ? value : "overview") as DevKitTab
+    setActiveTab(next)
+    const params = new URLSearchParams(searchParams.toString())
+    if (next === "overview") params.delete("tab")
+    else params.set("tab", next)
+    router.replace(params.toString() ? `/devkit?${params}` : "/devkit", { scroll: false })
+  }
+
   const [project, setProject] = useState<DevKitProject | null>(null)
   const [projectNameInput, setProjectNameInput] = useState("")
   const [showAppId, setShowAppId] = useState(false)
@@ -362,155 +400,162 @@ export default function DevKitPage() {
             </p>
           </header>
 
-          <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="bg-zinc-950 border border-zinc-800 p-1 mb-8 rounded-full flex flex-wrap gap-1">
+          <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
+            <TabsList className="bg-zinc-950/80 border border-zinc-800 p-1.5 mb-10 rounded-xl flex flex-wrap gap-1 h-12">
               <TabsTrigger
                 value="overview"
-                className="text-zinc-500 data-[state=active]:bg-[#5100fd] data-[state=active]:text-white px-6 py-3 rounded-full transition-all flex items-center gap-2"
+                className="text-zinc-400 data-[state=active]:bg-zinc-800 data-[state=active]:text-white data-[state=active]:shadow-sm px-5 py-2.5 rounded-lg transition-all flex items-center gap-2 text-sm font-medium h-full"
               >
-                <LayoutDashboard className="h-4 w-4" />
+                <LayoutDashboard className="h-4 w-4 shrink-0" />
                 Overview
               </TabsTrigger>
               <TabsTrigger
                 value="protocols"
-                className="text-zinc-500 data-[state=active]:bg-[#5100fd] data-[state=active]:text-white px-6 py-3 rounded-full transition-all flex items-center gap-2"
+                className="text-zinc-400 data-[state=active]:bg-zinc-800 data-[state=active]:text-white data-[state=active]:shadow-sm px-5 py-2.5 rounded-lg transition-all flex items-center gap-2 text-sm font-medium h-full"
               >
-                <Layers className="h-4 w-4" />
+                <Layers className="h-4 w-4 shrink-0" />
                 Protocols
               </TabsTrigger>
               <TabsTrigger
                 value="codegen"
-                className="text-zinc-500 data-[state=active]:bg-[#5100fd] data-[state=active]:text-white px-6 py-3 rounded-full transition-all flex items-center gap-2"
+                className="text-zinc-400 data-[state=active]:bg-zinc-800 data-[state=active]:text-white data-[state=active]:shadow-sm px-5 py-2.5 rounded-lg transition-all flex items-center gap-2 text-sm font-medium h-full"
               >
-                <Code className="h-4 w-4" />
+                <Code className="h-4 w-4 shrink-0" />
                 Code generator
               </TabsTrigger>
               <TabsTrigger
                 value="mcp"
-                className="text-zinc-500 data-[state=active]:bg-[#5100fd] data-[state=active]:text-white px-6 py-3 rounded-full transition-all flex items-center gap-2"
+                className="text-zinc-400 data-[state=active]:bg-zinc-800 data-[state=active]:text-white data-[state=active]:shadow-sm px-5 py-2.5 rounded-lg transition-all flex items-center gap-2 text-sm font-medium h-full"
               >
-                <Cpu className="h-4 w-4" />
+                <Cpu className="h-4 w-4 shrink-0" />
                 MCP
               </TabsTrigger>
             </TabsList>
 
             {/* ─── Overview: Project creation + key ───────────────────────────── */}
-            <TabsContent value="overview" className="mt-8 space-y-8">
-              <div className="flex flex-col sm:flex-row gap-4 items-start">
-                <div className="flex-1 flex gap-2">
+            <TabsContent value="overview" className="mt-0 space-y-10">
+              <section className="rounded-2xl border border-zinc-800 bg-zinc-900/30 p-8 backdrop-blur-sm">
+                <h2 className="text-xl font-semibold text-white mb-1">Create your project</h2>
+                <p className="text-sm text-zinc-400 mb-6 max-w-lg">
+                  Name your DevKit project to get an APP Id and API endpoint for the SDK.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
                   <Input
                     placeholder="Project name"
                     value={project ? project.name : projectNameInput}
                     onChange={(e) => (project ? null : setProjectNameInput(e.target.value))}
                     onKeyDown={(e) => e.key === "Enter" && !project && createProject()}
-                    className="bg-zinc-950 border-zinc-800 text-white placeholder:text-zinc-500 max-w-xs"
+                    className="bg-zinc-950 border-zinc-700 text-white placeholder:text-zinc-500 sm:max-w-xs h-12 rounded-xl border focus:ring-2 focus:ring-zinc-600 focus:border-zinc-600"
                     readOnly={!!project}
                   />
                   {!project && (
-                    <Button
+                    <LiquidMetalButton
+                      label="+ Create Project"
                       onClick={createProject}
-                      className="bg-[#5100fd] hover:bg-[#5100fd]/90 text-white shrink-0"
-                    >
-                      + Create Project
-                    </Button>
+                      width={180}
+                      className="shrink-0 self-center sm:self-auto"
+                    />
                   )}
                 </div>
-              </div>
+              </section>
 
               {project && (
-                <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-6 space-y-6">
-                  <p className="text-sm text-zinc-500">Project: {project.name}</p>
-
-                  <div>
-                    <p className="text-sm text-zinc-400 mb-1">APP Id</p>
-                    <div className="flex items-center gap-2">
-                      <code className="flex-1 rounded-lg bg-black/50 px-3 py-2 text-sm font-mono text-zinc-300">
-                        {showAppId ? project.appId : "••••••••••••••••••••••••••••••••"}
-                      </code>
-                      <button
-                        type="button"
-                        onClick={() => setShowAppId((s) => !s)}
-                        className="p-2 rounded-lg border border-zinc-700 text-zinc-400 hover:text-white hover:bg-white/5"
-                        aria-label={showAppId ? "Hide" : "Show"}
-                      >
-                        {showAppId ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
+                <section className="rounded-2xl border border-zinc-800 bg-zinc-900/30 overflow-hidden backdrop-blur-sm">
+                  <div className="px-6 py-4 border-b border-zinc-800 bg-zinc-950/50">
+                    <h2 className="text-lg font-semibold text-white">Project details</h2>
+                    <p className="text-sm text-zinc-500 mt-0.5">{project.name}</p>
                   </div>
-
-                  <div>
-                    <p className="text-sm text-zinc-400 mb-1">API Endpoint</p>
-                    <p className="text-xs text-zinc-500 mb-2">
-                      Use this endpoint in your server SDK configuration.
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <code className="flex-1 truncate rounded-lg bg-black/50 px-3 py-2 text-sm font-mono text-zinc-300">
-                        {apiEndpoint}
-                      </code>
-                      <button
-                        type="button"
-                        onClick={copyEndpoint}
-                        className="p-2 rounded-lg border border-zinc-700 text-zinc-400 hover:text-white hover:bg-white/5 flex items-center gap-1"
-                      >
-                        {copiedEndpoint ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <p className="text-sm text-zinc-400 mb-1 flex items-center gap-2">
-                      Payout Wallet
-                      <button
-                        type="button"
-                        onClick={() => (editingPayout ? savePayoutWallet() : setEditingPayout(true))}
-                        className="p-1 rounded text-zinc-500 hover:text-white"
-                        aria-label="Edit"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
-                    </p>
-                    {editingPayout ? (
+                  <div className="p-6 space-y-8">
+                    <div>
+                      <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wider mb-2">APP Id</label>
                       <div className="flex gap-2">
-                        <Input
-                          value={payoutInput}
-                          onChange={(e) => setPayoutInput(e.target.value)}
-                          placeholder="Enter your Stellar address (G...)"
-                          className="bg-black/50 border-zinc-700 text-white font-mono text-sm"
-                        />
-                        <Button size="sm" onClick={savePayoutWallet} className="shrink-0">
-                          Save
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <code className="flex-1 truncate rounded-lg bg-black/50 px-3 py-2 text-sm font-mono text-zinc-300">
-                          {project.payoutWallet || "Not set — click Edit to add"}
+                        <code className="flex-1 rounded-xl bg-black/50 border border-zinc-800 px-4 py-3 text-sm font-mono text-zinc-300">
+                          {showAppId ? project.appId : "••••••••••••••••••••••••••••••••"}
                         </code>
                         <button
                           type="button"
-                          onClick={copyWallet}
-                          disabled={!project?.payoutWallet}
-                          className="p-2 rounded-lg border border-zinc-700 text-zinc-400 hover:text-white hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
+                          onClick={() => setShowAppId((s) => !s)}
+                          className="p-2.5 rounded-xl border border-zinc-700 text-zinc-400 hover:text-white hover:bg-zinc-800/80 transition-colors"
+                          aria-label={showAppId ? "Hide" : "Show"}
                         >
-                          {copiedWallet ? <Check className="h-4 w-4" /> : <Wallet className="h-4 w-4" />}
+                          {showAppId ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
-                    )}
-                  </div>
+                    </div>
 
-                  <div className="pt-6 border-t border-zinc-800">
-                    <p className="text-sm font-medium text-zinc-400 mb-2">Danger Zone</p>
-                    <p className="text-sm text-zinc-500 mb-3">Delete this project permanently.</p>
-                    <Button
-                      variant="destructive"
-                      onClick={deleteProject}
-                      className="bg-red-950/50 border border-red-900/50 text-red-400 hover:bg-red-900/30"
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
-                    </Button>
+                    <div>
+                      <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wider mb-2">API Endpoint</label>
+                      <p className="text-xs text-zinc-500 mb-2">Use this in your server SDK configuration.</p>
+                      <div className="flex gap-2">
+                        <code className="flex-1 truncate rounded-xl bg-black/50 border border-zinc-800 px-4 py-3 text-sm font-mono text-zinc-300">
+                          {apiEndpoint}
+                        </code>
+                        <button
+                          type="button"
+                          onClick={copyEndpoint}
+                          className="p-2.5 rounded-xl border border-zinc-700 text-zinc-400 hover:text-white hover:bg-zinc-800/80 transition-colors flex items-center gap-1.5 shrink-0"
+                        >
+                          {copiedEndpoint ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                          {copiedEndpoint ? "Copied" : "Copy"}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="flex items-center gap-2 text-xs font-medium text-zinc-500 uppercase tracking-wider mb-2">
+                        Payout Wallet
+                        <button
+                          type="button"
+                          onClick={() => (editingPayout ? savePayoutWallet() : setEditingPayout(true))}
+                          className="p-1 rounded-md text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors"
+                          aria-label="Edit"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                      </label>
+                      {editingPayout ? (
+                        <div className="flex gap-2">
+                          <Input
+                            value={payoutInput}
+                            onChange={(e) => setPayoutInput(e.target.value)}
+                            placeholder="Enter your Stellar address (G...)"
+                            className="bg-black/50 border-zinc-700 text-white font-mono text-sm rounded-xl"
+                          />
+                          <Button size="sm" onClick={savePayoutWallet} className="shrink-0 rounded-xl">
+                            Save
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <code className="flex-1 truncate rounded-xl bg-black/50 border border-zinc-800 px-4 py-3 text-sm font-mono text-zinc-300">
+                            {project.payoutWallet || "Not set — click Edit to add"}
+                          </code>
+                          <button
+                            type="button"
+                            onClick={copyWallet}
+                            disabled={!project?.payoutWallet}
+                            className="p-2.5 rounded-xl border border-zinc-700 text-zinc-400 hover:text-white hover:bg-zinc-800/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0"
+                          >
+                            {copiedWallet ? <Check className="h-4 w-4" /> : <Wallet className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="pt-6 border-t border-zinc-800">
+                      <h3 className="text-sm font-medium text-zinc-400 mb-1">Danger zone</h3>
+                      <p className="text-xs text-zinc-500 mb-4">Delete this project permanently. This cannot be undone.</p>
+                      <Button
+                        variant="destructive"
+                        onClick={deleteProject}
+                        className="rounded-xl bg-red-950/50 border border-red-900/50 text-red-400 hover:bg-red-900/30"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete project
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                </section>
               )}
             </TabsContent>
 
@@ -522,7 +567,7 @@ export default function DevKitPage() {
               <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {DEFI_PROTOCOLS.map((proto) => (
                   <li key={proto.id} className="group relative">
-                    <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 py-4 px-4 hover:border-[#5100fd]/50 hover:bg-zinc-900/50 transition-colors flex items-center justify-between gap-2">
+                    <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 py-4 px-4 hover:border-zinc-600 hover:bg-zinc-900/50 transition-colors flex items-center justify-between gap-2">
                       <span className="font-medium text-white">{proto.name}</span>
                       <ChevronDown className="h-4 w-4 text-zinc-500 group-hover:text-zinc-400 shrink-0 transition-transform group-hover:rotate-180" />
                     </div>
@@ -564,7 +609,7 @@ export default function DevKitPage() {
                       onClick={() => setCodeGenKey(proto.codeKey)}
                       className={`w-full text-left rounded-lg px-4 py-3 text-sm transition-colors ${
                         codeGenKey === proto.codeKey
-                          ? "bg-[#5100fd]/20 text-[#a78bfa] border border-[#5100fd]/40"
+                          ? "bg-zinc-800/50 text-zinc-200 border border-zinc-600"
                           : "text-zinc-400 hover:bg-zinc-800/50 hover:text-white border border-transparent"
                       }`}
                     >
@@ -578,14 +623,17 @@ export default function DevKitPage() {
                       <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-zinc-800 bg-black/30">
                         <span className="text-sm font-mono text-zinc-400">{currentSnippet.filename}</span>
                         <div className="flex items-center gap-2">
-                          {PROTOCOLS.find((p) => p.codeKey === codeGenKey)?.tryItHref && (
-                            <Link
-                              href={PROTOCOLS.find((p) => p.codeKey === codeGenKey)!.tryItHref!}
-                              className="inline-flex items-center gap-1 rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400 hover:text-white hover:bg-white/5"
-                            >
-                              Try it <ExternalLink className="h-3 w-3" />
-                            </Link>
-                          )}
+                          {(() => {
+                            const proto = PROTOCOLS.find((p) => p.codeKey === codeGenKey)
+                            return proto?.tryItHref ? (
+                              <Link
+                                href={proto.tryItHref}
+                                className="inline-flex items-center gap-1 rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400 hover:text-white hover:bg-white/5"
+                              >
+                                Try it <ExternalLink className="h-3 w-3" />
+                              </Link>
+                            ) : null
+                          })()}
                           <button
                             type="button"
                             onClick={copyCode}
