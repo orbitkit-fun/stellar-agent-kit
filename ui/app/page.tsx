@@ -27,14 +27,14 @@ export default function Home() {
       <div className="relative min-h-[85vh] w-full">
         <DotPattern
           fixed={false}
-          baseColor="#52525b"
+          baseColor="#a1a1aa"
           glowColor="#a78bfa"
-          gap={20}
-          dotSize={2.5}
+          gap={18}
+          dotSize={3}
           proximity={140}
           waveSpeed={0.4}
-          baseOpacityMin={0.45}
-          baseOpacityMax={0.7}
+          baseOpacityMin={0.35}
+          baseOpacityMax={0.55}
         />
         <div id="hero" className="relative z-20 container mx-auto px-6 lg:px-12 pt-32 pb-40 min-h-[85vh] flex flex-col items-center justify-center text-center">
           <div className="flex flex-col items-center max-w-3xl mx-auto w-full">
@@ -157,14 +157,14 @@ export default function Home() {
             <div className="absolute inset-0 -z-10">
               <DotPattern
                 fixed={false}
-                baseColor="#3f3f46"
+                baseColor="#71717a"
                 glowColor="#a78bfa"
-                gap={22}
-                dotSize={2.5}
+                gap={20}
+                dotSize={3}
                 proximity={100}
                 waveSpeed={0.3}
-                baseOpacityMin={0.45}
-                baseOpacityMax={0.7}
+                baseOpacityMin={0.35}
+                baseOpacityMax={0.55}
               />
             </div>
             <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center relative z-10">

@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { LiquidMetalButton } from "@/components/ui/liquid-metal-button"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 import { ScrambleText } from "@/components/scramble-text"
 
 // 5 protocols integrated in the kit — logos from brand/logos (copied to public/brand/logos)
@@ -79,12 +80,16 @@ export function ProtocolsIntegratedSection() {
         ))}
       </div>
       <div className="mt-10 text-center">
-        <LiquidMetalButton
-          href="/protocols"
-          label="View all protocols — Try it, get code, or open docs"
-          width={400}
-          className="mx-auto"
-        />
+        <Button
+          variant="outline"
+          size="lg"
+          asChild
+          className="rounded-full border-zinc-600 bg-zinc-900/90 text-white hover:bg-zinc-800 hover:border-zinc-500 hover:text-white"
+        >
+          <Link href="/protocols">
+            View all protocols — Try it, get code, or open docs
+          </Link>
+        </Button>
       </div>
     </section>
   )

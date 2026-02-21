@@ -4,7 +4,7 @@ import React, { useState } from "react"
 import { useAccount } from "@/hooks/use-account"
 import { useIsMounted } from "@/hooks/use-is-mounted"
 import { ConnectButton } from "./connect-button"
-import { LiquidMetalButton } from "@/components/ui/liquid-metal-button"
+import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Copy, ExternalLink, LogOut } from "lucide-react"
 import { toast } from "sonner"
@@ -43,7 +43,15 @@ export function WalletData() {
   }
 
   if (!account) {
-    return <ConnectButton label="Connect Wallet" />
+    return (
+      <ConnectButton
+        label="Connect Wallet"
+        variant="shiny"
+        size="default"
+        width={160}
+        className="shrink-0"
+      />
+    )
   }
 
   const connectedLabel =
@@ -54,13 +62,12 @@ export function WalletData() {
   return (
     <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
       <DropdownMenuTrigger asChild>
-        <div className="cursor-pointer inline-block" role="button" tabIndex={0}>
-          <LiquidMetalButton
-            label={connectedLabel}
-            width={200}
-            className="shrink-0"
-          />
-        </div>
+        <Button
+          variant="outline"
+          className="shrink-0 rounded-full border-zinc-600 text-white hover:bg-zinc-800 hover:border-zinc-500 min-w-[200px]"
+        >
+          {connectedLabel}
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
         align="end" 

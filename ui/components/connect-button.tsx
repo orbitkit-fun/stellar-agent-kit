@@ -12,12 +12,17 @@ interface ConnectButtonProps {
   label?: string
   variant?: "default" | "shiny" | "outline" | "ghost"
   size?: "default" | "sm" | "lg"
+  className?: string
+  /** For variant="shiny": button width in px (default from size) */
+  width?: number
 }
 
 export function ConnectButton({
   label = "Connect Wallet",
   variant = "shiny",
   size = "default",
+  className,
+  width,
 }: ConnectButtonProps) {
   const { connect, isLoading } = useAccount()
   const { isFreighterAvailable } = useWallet()
@@ -57,12 +62,14 @@ export function ConnectButton({
   }
 
   if (variant === "shiny") {
+    const metalWidth = width ?? (size === "lg" ? 180 : size === "sm" ? 120 : 152)
     return (
       <LiquidMetalButton
         label={isConnecting ? "Connecting..." : label}
         onClick={handleConnect}
         disabled={isLoading || isConnecting}
-        width={size === "lg" ? 180 : size === "sm" ? 120 : 152}
+        width={metalWidth}
+        className={className}
       />
     )
   }
@@ -73,7 +80,7 @@ export function ConnectButton({
       onClick={handleConnect}
       disabled={isLoading || isConnecting}
       size={size}
-      className="gap-2 px-5 py-2.5 rounded-full"
+      className={className ?? "gap-2 px-5 py-2.5 rounded-full"}
     >
       <Wallet className="h-4 w-4" />
       {isConnecting ? "Connecting..." : label}

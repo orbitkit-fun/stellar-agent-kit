@@ -40,7 +40,6 @@ export function LiquidMetalButton({
   const shaderMount = useRef<any>(null)
   const buttonRef = useRef<HTMLButtonElement | HTMLAnchorElement>(null)
   const rippleId = useRef(0)
-  const lastShaderSize = useRef({ w: 0, h: 0 })
 
   const dimensions = useMemo(() => {
     const h = 46
@@ -64,7 +63,7 @@ export function LiquidMetalButton({
         shaderHeight: h,
       }
     }
-    const targetWidth = width || 142
+    const targetWidth = width ?? 142
     return {
       width: targetWidth,
       height: h,
@@ -84,21 +83,22 @@ export function LiquidMetalButton({
       style.id = styleId
       style.textContent = `
         .shader-container-exploded {
-          overflow: hidden !important;
+          pointer-events: none !important;
+          z-index: 0 !important;
+          contain: paint !important;
+          isolation: isolate !important;
         }
         .shader-container-exploded canvas {
           width: 100% !important;
           height: 100% !important;
-          min-width: 100% !important;
-          min-height: 100% !important;
           display: block !important;
           position: absolute !important;
           top: 0 !important;
           left: 0 !important;
-          right: 0 !important;
-          bottom: 0 !important;
           border-radius: 100px !important;
-          object-fit: cover !important;
+          z-index: 0 !important;
+          pointer-events: none !important;
+          contain: strict !important;
         }
         @keyframes ripple-animation {
           0% {
@@ -114,72 +114,48 @@ export function LiquidMetalButton({
       document.head.appendChild(style)
     }
 
-    const loadShader = async (container: HTMLDivElement) => {
+    const loadShader = async () => {
       try {
         const { liquidMetalFragmentShader, ShaderMount } = await import("@paper-design/shaders")
 
-        if (shaderMount.current?.destroy) {
-          shaderMount.current.destroy()
-          shaderMount.current = null
+        if (shaderRef.current) {
+          if (shaderMount.current?.destroy) {
+            shaderMount.current.destroy()
+          }
+
+          // Add a small delay to ensure the DOM is ready and the dark fill is painted first
+          setTimeout(() => {
+            if (shaderRef.current) {
+              shaderMount.current = new ShaderMount(
+                shaderRef.current,
+                liquidMetalFragmentShader,
+                {
+                  u_repetition: 4,
+                  u_softness: 0.5,
+                  u_shiftRed: 0.3,
+                  u_shiftBlue: 0.3,
+                  u_distortion: 0,
+                  u_contour: 0,
+                  u_angle: 45,
+                  u_scale: 8,
+                  u_shape: 1,
+                  u_offsetX: 0.1,
+                  u_offsetY: -0.1,
+                },
+                undefined,
+                0.6,
+              )
+            }
+          }, 100)
         }
-
-        const rect = container.getBoundingClientRect()
-        const w = Math.round(rect.width) || (typeof dimensions.width === "number" ? dimensions.width : 300)
-        const h = Math.round(rect.height) || dimensions.height
-        lastShaderSize.current = { w, h }
-        const aspect = w / h
-        const repetition = Math.max(4, Math.round(4 * aspect))
-
-        shaderMount.current = new ShaderMount(
-          container,
-          liquidMetalFragmentShader,
-          {
-            u_repetition: repetition,
-            u_softness: 0.5,
-            u_shiftRed: 0.3,
-            u_shiftBlue: 0.3,
-            u_distortion: 0,
-            u_contour: 0,
-            u_angle: 45,
-            u_scale: 8,
-            u_shape: 1,
-            u_offsetX: 0.1,
-            u_offsetY: -0.1,
-          },
-          undefined,
-          0.6,
-        )
       } catch (error) {
         console.error("[LiquidMetalButton] Failed to load shader:", error)
       }
     }
 
-    const el = shaderRef.current
-    if (!el) return
-
-    const runLoad = () => {
-      if (!shaderRef.current) return
-      const rect = shaderRef.current.getBoundingClientRect()
-      const w = Math.round(rect.width)
-      const h = Math.round(rect.height)
-      if (w > 0 && h > 0) loadShader(shaderRef.current)
-    }
-
-    runLoad()
-
-    const ro = new ResizeObserver(() => {
-      if (!shaderRef.current) return
-      const rect = shaderRef.current.getBoundingClientRect()
-      const w = Math.round(rect.width)
-      const h = Math.round(rect.height)
-      if (w > 0 && h > 0 && (w !== lastShaderSize.current.w || h !== lastShaderSize.current.h)) {
-        loadShader(shaderRef.current)
-      }
-    })
-    ro.observe(el)
+    loadShader()
 
     return () => {
-      ro.disconnect()
       if (shaderMount.current?.destroy) {
         shaderMount.current.destroy()
         shaderMount.current = null
@@ -211,9 +187,9 @@ export function LiquidMetalButton({
       }, 300)
     }
 
-    const target = e.currentTarget
-    if (target) {
-      const rect = target.getBoundingClientRect()
+    const targetEl = e.currentTarget
+    if (targetEl) {
+      const rect = targetEl.getBoundingClientRect()
       const x = e.clientX - rect.left
       const y = e.clientY - rect.top
       const ripple = { x, y, id: rippleId.current++ }
@@ -246,7 +222,7 @@ export function LiquidMetalButton({
       border: "none",
       cursor: disabled ? "not-allowed" : "pointer",
       outline: "none",
-      zIndex: 40,
+      zIndex: 30,
       transformStyle: "preserve-3d" as const,
       transform: "translateZ(25px)",
       transition: "all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.4s ease, height 0.4s ease",
@@ -261,7 +237,11 @@ export function LiquidMetalButton({
   return (
     <div
       className={className ? `relative inline-block ${className}` : "relative inline-block"}
-      style={fullWidth ? { width: "100%" } : undefined}
+      style={{
+        ...(fullWidth ? { width: "100%" } : {}),
+        background: "transparent",
+        isolation: "isolate",
+      }}
     >
       <div
         style={{
@@ -277,8 +257,90 @@ export function LiquidMetalButton({
             transformStyle: "preserve-3d",
             transition: "all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.4s ease, height 0.4s ease",
             transform: "none",
+            isolation: "isolate",
           }}
         >
+          {/* 1. Shader layer at the back — never on top so it can't cover content when it loads */}
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: toSize(dimensions.width),
+              height: toSize(dimensions.height),
+              transformStyle: "preserve-3d",
+              transition: "all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.4s ease, height 0.4s ease",
+              transform: `translateZ(0px) ${isPressed ? "translateY(1px) scale(0.98)" : "translateY(0) scale(1)"}`,
+              zIndex: 0,
+            }}
+          >
+            <div
+              style={{
+                height: toSize(dimensions.height),
+                width: toSize(dimensions.width),
+                borderRadius: "100px",
+                boxShadow: isPressed
+                  ? "0px 0px 0px 1px rgba(0, 0, 0, 0.5), 0px 1px 2px 0px rgba(0, 0, 0, 0.3)"
+                  : isHovered
+                    ? "0px 0px 0px 1px rgba(0, 0, 0, 0.4), 0px 12px 6px 0px rgba(0, 0, 0, 0.05), 0px 8px 5px 0px rgba(0, 0, 0, 0.1), 0px 4px 4px 0px rgba(0, 0, 0, 0.15), 0px 1px 2px 0px rgba(0, 0, 0, 0.2)"
+                    : "0px 0px 0px 1px rgba(0, 0, 0, 0.3), 0px 36px 14px 0px rgba(0, 0, 0, 0.02), 0px 20px 12px 0px rgba(0, 0, 0, 0.08), 0px 9px 9px 0px rgba(0, 0, 0, 0.12), 0px 2px 5px 0px rgba(0, 0, 0, 0.15)",
+                transition:
+                  "all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.4s ease, height 0.4s ease, box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1)",
+                background: "transparent",
+              }}
+            >
+              <div
+                ref={shaderRef}
+                className="shader-container-exploded"
+                style={{
+                  borderRadius: "100px",
+                  overflow: "hidden",
+                  position: "absolute",
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
+                  background: "#0a0a0a",
+                  transition: "width 0.4s ease, height 0.4s ease",
+                }}
+              />
+            </div>
+          </div>
+
+          {/* 2. Dark inner fill — always above shader (Chrome: own layer so canvas never covers) */}
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: toSize(dimensions.width),
+              height: toSize(dimensions.height),
+              transformStyle: "preserve-3d",
+              transition: "all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.4s ease, height 0.4s ease",
+              transform: `translateZ(10px) ${isPressed ? "translateY(1px) scale(0.98)" : "translateY(0) scale(1)"}`,
+              zIndex: 10,
+              pointerEvents: "none",
+              backfaceVisibility: "hidden",
+              WebkitBackfaceVisibility: "hidden",
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                inset: "2px",
+                width: "calc(100% - 4px)",
+                height: "calc(100% - 4px)",
+                borderRadius: "100px",
+                background: "linear-gradient(180deg, #1a1a1a 0%, #000000 100%)",
+                boxShadow: isPressed
+                  ? "inset 0px 2px 4px rgba(0, 0, 0, 0.4), inset 0px 1px 2px rgba(0, 0, 0, 0.3)"
+                  : "none",
+                transition:
+                  "all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.4s ease, height 0.4s ease, box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1)",
+              }}
+            />
+          </div>
+
+          {/* 3. Label / content — always on top (Chrome: own layer) */}
           <div
             style={{
               position: "absolute",
@@ -294,8 +356,10 @@ export function LiquidMetalButton({
               transition:
                 "all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.4s ease, height 0.4s ease, gap 0.4s ease",
               transform: "translateZ(20px)",
-              zIndex: 30,
+              zIndex: 20,
               pointerEvents: "none",
+              backfaceVisibility: "hidden",
+              WebkitBackfaceVisibility: "hidden",
             }}
           >
             {viewMode === "icon" ? (
@@ -328,80 +392,6 @@ export function LiquidMetalButton({
                 {displayLabel}
               </span>
             )}
-          </div>
-
-          <div
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: toSize(dimensions.width),
-              height: toSize(dimensions.height),
-              transformStyle: "preserve-3d",
-              transition: "all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.4s ease, height 0.4s ease",
-              transform: `translateZ(10px) ${isPressed ? "translateY(1px) scale(0.98)" : "translateY(0) scale(1)"}`,
-              zIndex: 20,
-            }}
-          >
-            <div
-              style={{
-                width: toSize(dimensions.innerWidth),
-                height: `${dimensions.innerHeight}px`,
-                margin: "2px",
-                borderRadius: "100px",
-                background: "linear-gradient(180deg, #202020 0%, #000000 100%)",
-                boxShadow: isPressed
-                  ? "inset 0px 2px 4px rgba(0, 0, 0, 0.4), inset 0px 1px 2px rgba(0, 0, 0, 0.3)"
-                  : "none",
-                transition:
-                  "all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.4s ease, height 0.4s ease, box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1)",
-              }}
-            />
-          </div>
-
-          <div
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: toSize(dimensions.width),
-              height: toSize(dimensions.height),
-              transformStyle: "preserve-3d",
-              transition: "all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.4s ease, height 0.4s ease",
-              transform: `translateZ(0px) ${isPressed ? "translateY(1px) scale(0.98)" : "translateY(0) scale(1)"}`,
-              zIndex: 10,
-            }}
-          >
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                height: toSize(dimensions.height),
-                width: toSize(dimensions.width),
-                borderRadius: "100px",
-                boxShadow: isPressed
-                  ? "0px 0px 0px 1px rgba(0, 0, 0, 0.5), 0px 1px 2px 0px rgba(0, 0, 0, 0.3)"
-                  : isHovered
-                    ? "0px 0px 0px 1px rgba(0, 0, 0, 0.4), 0px 12px 6px 0px rgba(0, 0, 0, 0.05), 0px 8px 5px 0px rgba(0, 0, 0, 0.1), 0px 4px 4px 0px rgba(0, 0, 0, 0.15), 0px 1px 2px 0px rgba(0, 0, 0, 0.2)"
-                    : "0px 0px 0px 1px rgba(0, 0, 0, 0.3), 0px 36px 14px 0px rgba(0, 0, 0, 0.02), 0px 20px 12px 0px rgba(0, 0, 0, 0.08), 0px 9px 9px 0px rgba(0, 0, 0, 0.12), 0px 2px 5px 0px rgba(0, 0, 0, 0.15)",
-                transition:
-                  "all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.4s ease, height 0.4s ease, box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1)",
-                background: "rgb(0 0 0 / 0)",
-              }}
-            >
-              <div
-                ref={shaderRef}
-                className="shader-container-exploded"
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  width: "100%",
-                  height: "100%",
-                  borderRadius: "100px",
-                  overflow: "hidden",
-                }}
-              />
-            </div>
           </div>
 
           {isLink ? (

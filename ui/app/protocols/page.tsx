@@ -11,7 +11,6 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import { Button } from "@/components/ui/button"
-import { LiquidMetalButton } from "@/components/ui/liquid-metal-button"
 import { BentoGrid } from "@/components/ui/bento-grid"
 
 // Contract IDs from stellar-agent-kit + protocol docs (mainnet)
@@ -198,13 +197,11 @@ function ProtocolCard({ protocol }: { protocol: Protocol }) {
       {/* Primary CTA: every protocol is ready to use */}
       {action && (
         <div className="mb-4">
-          <LiquidMetalButton
-            href={action.href}
-            label={action.label}
-            width={action.external ? 160 : 140}
-            target={action.external ? "_blank" : undefined}
-            rel={action.external ? "noopener noreferrer" : undefined}
-          />
+          <Button variant="outline" size="sm" className="rounded-full border-zinc-600 text-white hover:bg-zinc-800 hover:border-zinc-500" asChild>
+            <Link href={action.href} target={action.external ? "_blank" : undefined} rel={action.external ? "noopener noreferrer" : undefined}>
+              {action.label}
+            </Link>
+          </Button>
         </div>
       )}
 
