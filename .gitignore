@@ -1,2 +1,4 @@
 .env.local
 node_modules
+/mantle-devkit-main
+.gitignore

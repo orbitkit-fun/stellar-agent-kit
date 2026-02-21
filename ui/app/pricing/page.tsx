@@ -102,7 +102,7 @@ export default function PricingPage() {
       <Navbar />
       <PageTransition>
         <div className="pt-32 pb-20 px-6 max-w-5xl mx-auto">
-          <h1 className="text-3xl font-bold text-center mb-4">Pricing</h1>
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white text-center mb-4">Pricing</h1>
           <p className="text-zinc-400 text-center mb-12 max-w-xl mx-auto">
             Choose the plan that fits your build. Upgrade anytime to unlock Pro templates and support.
           </p>

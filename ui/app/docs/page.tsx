@@ -16,7 +16,7 @@ export default function DocsPage() {
           <article className="flex-1 min-w-0 pt-28 px-6 md:px-8 lg:px-10 xl:px-12 pb-24">
             <span className="text-[#a78bfa] text-sm font-medium">Introduction</span>
             <header className="mb-10 mt-1">
-              <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white">
                 Stellar DevKit documentation
               </h1>
               <p className="mt-4 text-lg text-zinc-400">

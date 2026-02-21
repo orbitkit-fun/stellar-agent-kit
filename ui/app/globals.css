@@ -38,11 +38,6 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 
-  /* Racing lines animation offset variables */
-  --animations--line-1-offset: 0px;
-  --animations--line-2-offset: 0px;
-  --animations--line-3-offset: 0px;
-  --animations--line-4-offset: 0px;
 }
 
 .dark {
@@ -81,7 +76,7 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-geist), "Geist", "Geist Fallback";
+  --font-sans: var(--font-space-grotesk), "Space Grotesk", sans-serif;
   --font-mono: var(--font-geist-mono), "Geist Mono", "Geist Mono Fallback";
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -134,44 +129,6 @@
 }
 
 @layer utilities {
-  /* Added bg-lines-container with responsive scaling */
-  .bg-lines-container {
-    position: fixed;
-    inset: 0%;
-    z-index: -3;
-    width: 100vw;
-    height: 100vh;
-  }
-
-  @media screen and (max-width: 991px) {
-    .bg-lines-container {
-      display: block;
-      flex-direction: row;
-      transform: scale(1.125);
-    }
-  }
-
-  @media screen and (max-width: 767px) {
-    .bg-lines-container {
-      transform: scale(1.05);
-      object-fit: contain;
-    }
-  }
-
-  @media screen and (max-width: 479px) {
-    .bg-lines-container {
-      transform: scale(1.8);
-    }
-  }
-
-  /* Changed display from none to block so Spline viewer is visible */
-  .track {
-    position: fixed;
-    inset: 0%;
-    display: block;
-    margin-top: 0vh;
-  }
-
   @keyframes fade-in {
     from {
       opacity: 0;
@@ -190,33 +147,6 @@
       opacity: 1;
       transform: translateY(0);
     }
-  }
-
-  /* Added racing line animations with varying speeds */
-  /* Reversed flow (0 to -3000px) and doubled animation durations */
-  @keyframes line-race {
-    from {
-      stroke-dashoffset: 0px;
-    }
-    to {
-      stroke-dashoffset: -3000px;
-    }
-  }
-
-  .animate-line-race-1 {
-    animation: line-race 1.6s ease-in-out infinite;
-  }
-
-  .animate-line-race-2 {
-    animation: line-race 1.2s ease-in-out infinite;
-  }
-
-  .animate-line-race-3 {
-    animation: line-race 2s ease-in-out infinite;
-  }
-
-  .animate-line-race-4 {
-    animation: line-race 1s ease-in-out infinite;
   }
 
   .animate-fade-in {

@@ -354,7 +354,7 @@ export default function DevKitPage() {
       <section className="relative z-20 py-16 md:py-24">
         <div className="mx-auto w-full max-w-4xl px-6 sm:px-8 lg:px-12">
           <header className="mb-12">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-light text-balance tracking-tight">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white">
               DevKit
             </h1>
             <p className="mt-6 text-lg md:text-xl text-zinc-400 max-w-2xl leading-relaxed">

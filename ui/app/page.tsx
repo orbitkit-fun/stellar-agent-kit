@@ -5,7 +5,6 @@ import Image from "next/image"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { CircleArrowRight, ArrowRight, Code2, Wallet, Zap, Bot, Github, Scale, ArrowLeftRight, Lock, MessageCircle, Cpu, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useEffect, useState } from "react"
 import { Navbar } from "@/components/navbar"
 import { PageTransition } from "@/components/page-transition"
 import { ProtocolsIntegratedSection } from "@/components/protocols-integrated"
@@ -13,22 +12,6 @@ import { ScrambleText } from "@/components/scramble-text"
 import { FeatureCard } from "@/components/feature-card"
 
 export default function Home() {
-  const [scrollProgress, setScrollProgress] = useState(0)
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollY = window.scrollY
-      const viewportHeight = window.innerHeight
-      const progress = Math.min(scrollY / viewportHeight, 1)
-      setScrollProgress(progress)
-    }
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
-
-  const linesOpacity = 1 - scrollProgress
-  const linesScale = 1 - scrollProgress * 0.3
-
   const scrollToCapabilities = () => {
     document.getElementById("capabilities")?.scrollIntoView({ behavior: "smooth" })
   }
@@ -37,31 +20,6 @@ export default function Home() {
     <main className="relative min-h-[200vh] bg-black text-white overflow-hidden">
       <Navbar />
       <PageTransition>
-      <div
-        className="fixed inset-0 z-0 w-screen h-screen pointer-events-none transition-all duration-100"
-        style={{ opacity: linesOpacity, transform: `scale(${linesScale})` }}
-      >
-        <div className="bg-lines-container">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="2269"
-            height="2108"
-            viewBox="0 0 2269 2108"
-            fill="none"
-            className="w-full h-full"
-            preserveAspectRatio="xMidYMid slice"
-          >
-            <path d="M510.086 0.543457L507.556 840.047C506.058 1337.18 318.091 1803.4 1.875 2094.29" stroke="#4C00EC" strokeWidth="2" strokeMiterlimit="10" strokeDasharray="100px 99999px" className="animate-line-race-1" />
-            <path d="M929.828 0.543457L927.328 829.877C925.809 1334 737.028 1807.4 418.435 2106" stroke="#4C00EC" strokeWidth="2" strokeMiterlimit="10" strokeDasharray="100px 99999px" className="animate-line-race-2" />
-            <path d="M1341.9 0.543457L1344.4 829.876C1345.92 1334 1534.7 1807.4 1853.29 2106" stroke="#4C00EC" strokeWidth="2" strokeMiterlimit="10" strokeDasharray="100px 99999px" className="animate-line-race-3" />
-            <path d="M1758.96 0.543457L1761.49 840.047C1762.99 1337.18 1950.96 1803.4 2267.17 2094.29" stroke="#4C00EC" strokeWidth="2" strokeMiterlimit="10" strokeDasharray="100px 99999px" className="animate-line-race-4" />
-            <path opacity="0.2" d="M929.828 0.543457L927.328 829.877C925.809 1334 737.028 1807.4 418.435 2106" stroke="white" strokeWidth="1" strokeMiterlimit="10" />
-            <path opacity="0.2" d="M510.086 0.543457L507.556 840.047C506.058 1337.18 318.091 1803.4 1.875 2094.29" stroke="white" strokeWidth="1" strokeMiterlimit="10" />
-            <path opacity="0.2" d="M1758.96 0.543457L1761.49 840.047C1762.99 1337.18 1950.96 1803.4 2267.17 2094.29" stroke="white" strokeWidth="1" strokeMiterlimit="10" />
-            <path opacity="0.2" d="M1341.9 0.543457L1344.4 829.876C1345.92 1334 1534.7 1807.4 1853.29 2106" stroke="white" strokeWidth="1" strokeMiterlimit="10" />
-          </svg>
-        </div>
-      </div>
 
       {/* Hero — centered, large (majority of viewport) */}
       <div id="hero" className="relative z-20 container mx-auto px-6 lg:px-12 pt-32 pb-40 min-h-[85vh] flex flex-col items-center justify-center text-center">
