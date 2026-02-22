@@ -1,10 +1,8 @@
 "use client"
 
-import Link from "next/link"
 import Image from "next/image"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { CircleArrowRight, Code2, Wallet, Zap, Bot, Github, Scale, ArrowLeftRight, Lock, MessageCircle, Cpu, CheckCircle } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { LiquidMetalButton } from "@/components/ui/liquid-metal-button"
 import { Navbar } from "@/components/navbar"
 import { PageTransition } from "@/components/page-transition"
@@ -30,12 +28,12 @@ export default function Home() {
             fixed={false}
             baseColor="#71717a"
             glowColor="#a78bfa"
-            gap={24}
-            dotSize={2}
+            gap={22}
+            dotSize={2.5}
             proximity={140}
             waveSpeed={0.4}
-            baseOpacityMin={0.18}
-            baseOpacityMax={0.32}
+            baseOpacityMin={0.32}
+            baseOpacityMax={0.52}
           />
         </div>
         <div id="hero" className="relative z-20 container mx-auto px-6 lg:px-12 pt-32 pb-40 min-h-[85vh] flex flex-col items-center justify-center text-center">
@@ -66,26 +64,9 @@ export default function Home() {
               See what’s included
               <CircleArrowRight className="ml-2 h-5 w-5 transition-transform duration-300 group-hover:rotate-90" />
             </button>
-            <Link
-              href="/docs"
-              className="inline-flex items-center justify-center rounded-full border border-zinc-600 text-white px-6 py-3 text-sm font-medium hover:bg-zinc-800 hover:border-zinc-500 transition-all duration-300"
-            >
-              Docs
-            </Link>
-            <Link
-              href="/swap"
-              className="inline-flex items-center justify-center rounded-full border border-zinc-600 text-white px-6 py-3 text-sm font-medium hover:bg-zinc-800 hover:border-zinc-500 transition-all duration-300"
-            >
-              Try Swap
-            </Link>
-            <Link
-              href="https://www.npmjs.com/~milan4606"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center rounded-full border border-zinc-600 text-white px-6 py-3 text-sm font-medium hover:bg-zinc-800 hover:border-zinc-500 transition-all duration-300"
-            >
-              npm
-            </Link>
+            <LiquidMetalButton href="/docs" label="Docs" width={80} />
+            <LiquidMetalButton href="/swap" label="Try Swap" width={110} />
+            <LiquidMetalButton href="https://www.npmjs.com/~milan4606" label="npm" width={70} target="_blank" rel="noopener noreferrer" />
           </div>
         </div>
         </div>
@@ -154,21 +135,25 @@ export default function Home() {
           {/* Protocols Integrated — 5 protocols from the kit */}
           <ProtocolsIntegratedSection />
 
-          {/* Try it yourself — code snippet + CTA (dot pattern background) */}
-          <section id="try-it" className="relative z-20 py-16 scroll-mt-24 overflow-hidden">
-            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-screen min-h-full -z-10" aria-hidden>
-              <DotPattern
-                fixed={false}
-                baseColor="#52525b"
-                glowColor="#a78bfa"
-                gap={26}
-                dotSize={2}
-                proximity={100}
-                waveSpeed={0.3}
-                baseOpacityMin={0.18}
-                baseOpacityMax={0.32}
-              />
-            </div>
+          {/* Try it yourself — code snippet + CTA (dot pattern background, full width) */}
+        </div>
+
+        <section id="try-it" className="relative z-20 py-16 scroll-mt-24 w-screen left-1/2 -translate-x-1/2 overflow-hidden">
+          <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-screen min-h-full -z-10" aria-hidden>
+            <DotPattern
+              fixed={false}
+              baseColor="#52525b"
+              glowColor="#a78bfa"
+              gap={24}
+              dotSize={2.5}
+              proximity={100}
+              waveSpeed={0.3}
+              baseOpacityMin={0.28}
+              baseOpacityMax={0.48}
+              className="w-full h-full"
+            />
+          </div>
+          <div className="container mx-auto max-w-5xl px-6 lg:px-12">
             <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center relative z-10">
               <div className="rounded-2xl border border-zinc-800 bg-zinc-950 overflow-hidden">
                 <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-800 bg-zinc-900/80">
@@ -211,8 +196,10 @@ export default function Home() {
                 />
               </div>
             </div>
+          </div>
           </section>
 
+          <div className="container mx-auto max-w-5xl px-6 lg:px-12">
           <div className="text-center mb-12">
             <h2
               className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white uppercase mb-4"
@@ -338,9 +325,7 @@ export default function Home() {
 
           {/* Bottom CTA strip */}
           <div className="mt-16 pt-16 border-t border-zinc-800 flex flex-wrap items-center justify-center gap-6 text-center">
-            <Link href="/docs" className="rounded-full border border-zinc-600 bg-zinc-900/50 text-white px-6 py-3 text-sm font-medium hover:bg-zinc-800 hover:border-zinc-500 transition-all">
-              Docs
-            </Link>
+            <LiquidMetalButton href="/docs" label="Docs" width={80} />
             <LiquidMetalButton href="/swap" label="Try Swap" width={120} />
             <LiquidMetalButton href="/devkit" label="DevKit" width={100} />
             <LiquidMetalButton href="/pricing" label="Pricing" width={110} />
