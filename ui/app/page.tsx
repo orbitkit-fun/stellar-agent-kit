@@ -1,6 +1,8 @@
 "use client"
 
+import { type ReactNode } from "react"
 import Image from "next/image"
+import { motion } from "motion/react"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { CircleArrowRight, Code2, Wallet, Zap, Bot, Github, Scale, ArrowLeftRight, Lock, MessageCircle, Cpu, CheckCircle } from "lucide-react"
 import { LiquidMetalButton } from "@/components/ui/liquid-metal-button"
@@ -15,6 +17,23 @@ import { BentoCard, BentoGrid } from "@/components/ui/bento-grid"
 import { DotPattern } from "@/components/dot-pattern"
 import { DevKitAnimatedBeam } from "@/components/devkit-animated-beam"
 import { CodeWindow } from "@/components/code-window"
+
+const LANDING_VIEWPORT = { once: true, amount: 0.08 }
+const LANDING_TRANSITION = { duration: 0.7, ease: [0.22, 1, 0.36, 1] }
+
+function FadeInSection({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 48 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={LANDING_VIEWPORT}
+      transition={LANDING_TRANSITION}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  )
+}
 
 const TRY_IT_SNIPPET = `import { StellarAgentKit, MAINNET_ASSETS } from "stellar-agent-kit";
 
@@ -90,11 +109,13 @@ export default function Home() {
       </div>
 
       {/* Trusted by — marquee of partner logos */}
-      <TrustedByMarquee />
+      <FadeInSection>
+        <TrustedByMarquee />
+      </FadeInSection>
 
       {/* SDK Features — four pillars */}
       <section id="capabilities" className="relative z-20 py-20 scroll-mt-24">
-        <div className="container mx-auto max-w-5xl px-6 lg:px-12">
+        <FadeInSection className="container mx-auto max-w-5xl px-6 lg:px-12">
           <div className="mb-12 text-center">
             <h2
               className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white uppercase"
@@ -155,13 +176,17 @@ export default function Home() {
           </BentoGrid>
 
           {/* Protocols Integrated — 5 protocols from the kit */}
-          <ProtocolsIntegratedSection />
+          <FadeInSection>
+            <ProtocolsIntegratedSection />
+          </FadeInSection>
 
           {/* Supported Community Projects */}
-          <CommunityProjectsSection />
+          <FadeInSection>
+            <CommunityProjectsSection />
+          </FadeInSection>
 
           {/* Try it yourself — code snippet + CTA (dot pattern background, full width) */}
-        </div>
+        </FadeInSection>
 
         <section id="try-it" className="relative z-20 py-16 scroll-mt-24 w-screen left-1/2 -translate-x-1/2 overflow-hidden">
           <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-screen min-h-full -z-10" aria-hidden>
@@ -178,7 +203,7 @@ export default function Home() {
               className="w-full h-full"
             />
           </div>
-          <div className="container mx-auto max-w-5xl px-6 lg:px-12">
+          <FadeInSection className="container mx-auto max-w-5xl px-6 lg:px-12">
             <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center relative z-10">
               <CodeWindow code={TRY_IT_SNIPPET} title="stellar-agent-kit.ts" />
               <div className="flex flex-col items-start justify-center lg:px-4">
@@ -196,10 +221,10 @@ export default function Home() {
                 />
               </div>
             </div>
-          </div>
+          </FadeInSection>
           </section>
 
-          <div className="container mx-auto max-w-5xl px-6 lg:px-12">
+          <FadeInSection className="container mx-auto max-w-5xl px-6 lg:px-12">
           <div className="text-center mb-12">
             <h2
               className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white uppercase mb-4"
@@ -324,13 +349,13 @@ export default function Home() {
           </Tabs>
 
           {/* Bottom CTA strip */}
-          <div className="mt-16 pt-16 border-t border-zinc-800 flex flex-wrap items-center justify-center gap-6 text-center">
+          <FadeInSection className="mt-16 pt-16 border-t border-zinc-800 flex flex-wrap items-center justify-center gap-6 text-center">
             <LiquidMetalButton href="/docs" label="Docs" width={80} />
             <LiquidMetalButton href="/swap" label="Try Swap" width={120} />
             <LiquidMetalButton href="/devkit" label="DevKit" width={100} />
             <LiquidMetalButton href="/pricing" label="Pricing" width={110} />
-          </div>
-        </div>
+          </FadeInSection>
+        </FadeInSection>
       </section>
 
       <Footer />
