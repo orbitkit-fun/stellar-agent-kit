@@ -6,7 +6,9 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "eslint .",
-    "start": "next start"
+    "start": "next start",
+    "prebuild": "npm run build -w packages/x402-stellar-sdk",
+    "predev": "npm run build -w packages/x402-stellar-sdk",
   },
   "dependencies": {
     "@allbridge/bridge-core-sdk": "^3.29.1",
@@ -67,6 +69,7 @@
     "recharts": "2.15.4",
     "sonner": "^1.7.4",
     "stellar-agent-kit": "^1.0.5",
+    "x402-stellar-sdk": "*",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.9",
