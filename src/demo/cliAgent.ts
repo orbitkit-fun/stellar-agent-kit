@@ -1,6 +1,7 @@
 import { createInterface } from "readline";
 import type { Command } from "commander";
 import { tools } from "../tools/agentTools.js";
+import { parseSwapIntent, runAiSuggest } from "./aiCommandHandlers.js";
 
 /** Minimal type for OpenAI-compatible client (avoids duplicate module resolution with dynamic import). */
 type OpenAIClient = {
@@ -208,6 +209,38 @@ export function registerAgentCommand(program: Command): void {
         const userMessage = await readLine("You: ");
         if (userMessage.toLowerCase() === "exit" || userMessage.toLowerCase() === "quit") break;
         if (!userMessage) continue;
+
+        const swapIntent = parseSwapIntent(userMessage);
+        if (swapIntent && /should\s+i\s+swap/i.test(userMessage)) {
+          try {
+            const address = process.env.STELLAR_PUBLIC_KEY ?? (await readLine("Wallet public key (G...): "));
+            if (!address) {
+              console.log("Agent: Wallet address is required for AI suggestion flow.");
+              continue;
+            }
+
+            const output = await runAiSuggest({
+              query: userMessage,
+              address,
+              ask: readLine,
+              api: {
+                apiKey,
+                baseURL: "https://api.groq.com/openai/v1",
+                model,
+              },
+              secretKey: process.env.STELLAR_SECRET_KEY,
+              allowExecution: true,
+            });
+
+            console.log("Agent:", output.human);
+            console.log("JSON:", JSON.stringify(output.json, null, 2));
+            history.push({ role: "assistant", content: output.human });
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            console.error("Agent error:", message);
+          }
+          continue;
+        }
 
         history.push({ role: "user", content: userMessage });
 

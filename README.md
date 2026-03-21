@@ -89,6 +89,69 @@ Balance output: JSON array of `{ code, issuer, balance }`. Agent: interactive lo
 
 ---
 
+## AI Capabilities
+
+The CLI now includes AI-native wallet analysis and intent-driven action planning.
+
+- **Wallet analysis** (`analyze-wallet <address>`)  
+  Evaluates asset distribution, risk level (stable vs low-liquidity exposure), and recent activity.
+- **AI decision engine** (`ai-suggest <query>`)  
+  Combines wallet analysis + natural-language intent, then returns an action, reasoning, and confidence.
+- **Natural language automation** (`agent`)  
+  For prompts like **“Should I swap XLM to USDC?”**, the flow is: analyze wallet → AI decision → fetch quote → ask confirmation → execute swap.
+
+### Example commands
+
+```bash
+# Analyze wallet profile
+node dist/index.js analyze-wallet GABC...
+
+# Ask AI for a suggestion (uses --address or STELLAR_PUBLIC_KEY)
+node dist/index.js ai-suggest "Should I swap XLM to USDC?" --address GABC...
+
+# Interactive agent flow
+node dist/index.js agent
+```
+
+### Example output shape
+
+`analyze-wallet`:
+
+```json
+{
+  "address": "GABC...",
+  "analysis": {
+    "summary": "Top asset: XLM (74.2% of visible balance). Stable allocation: 20.3%. Recent activity: 6 tx in latest scan. Estimated portfolio risk: medium.",
+    "riskLevel": "medium",
+    "suggestions": [
+      "Increase stable-asset allocation to reduce volatility risk.",
+      "Use small test swaps first, then scale size after confirming execution quality."
+    ]
+  }
+}
+```
+
+`ai-suggest`:
+
+```json
+{
+  "query": "Should I swap XLM to USDC?",
+  "address": "GABC...",
+  "analysis": {
+    "summary": "...",
+    "riskLevel": "medium",
+    "suggestions": ["..."]
+  },
+  "decision": {
+    "action": "swap",
+    "reasoning": "Intent requests a swap and risk is manageable.",
+    "confidence": 0.73
+  }
+}
+```
+
+---
+
 ## Documentation
 
 - **[FLOWCHART.md](FLOWCHART.md)** — Architecture, tool flows, and progress.

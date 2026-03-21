@@ -15,6 +15,7 @@
   "scripts": {
     "build": "npm run build:root && npm run build:agent-kit && npm run build:x402 && npm run build --workspaces --if-present",
     "build:root": "tsc",
+    "test:root": "npm run build:root && node --test dist/tests/*.test.js",
     "build:agent-kit": "npm run build -w packages/stellar-agent-kit",
     "build:x402": "npm run build -w packages/x402-stellar-sdk",
     "build:create-app": "npm run build -w packages/create-stellar-devkit-app",
