@@ -8,8 +8,11 @@ import { Networks } from "@stellar/stellar-sdk"
 import { useAccount } from "@/hooks/use-account"
 import { useSoroSwap } from "@/hooks/use-soroswap"
 import { toast } from "sonner"
-
-type Message = { role: "user" | "assistant"; content: string }
+import {
+  loadChatHistory,
+  saveChatHistory,
+  type ChatMessage,
+} from "@/utils/chatStorage"
 
 /** Quote returned by the agent when it ran get_swap_quote (for Execute button). */
 type AgentQuote = {
@@ -23,7 +26,7 @@ type AgentQuote = {
 export function AgentChat() {
   const { account } = useAccount()
   const { buildSwap, submitSwap, isLoading: swapLoading } = useSoroSwap()
-  const [messages, setMessages] = useState<Message[]>([])
+  const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -36,13 +39,21 @@ export function AgentChat() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
+  useEffect(() => {
+    setMessages(loadChatHistory())
+  }, [])
+
+  useEffect(() => {
+    saveChatHistory(messages)
+  }, [messages])
+
   const send = async () => {
     const text = input.trim()
     if (!text || loading) return
     setInput("")
     setError(null)
     setPendingQuote(null)
-    const userMessage: Message = { role: "user", content: text }
+    const userMessage: ChatMessage = { role: "user", content: text }
     setMessages((prev) => [...prev, userMessage])
     setLoading(true)
     try {
