@@ -1,0 +1,8 @@
+[project]
+id = "stellar-agent-kit"
+
+[db]
+port = 54322
+
+[api]
+port = 54321
