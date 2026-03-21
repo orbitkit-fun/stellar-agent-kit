@@ -1,4 +1,9 @@
-import { CHAT_HISTORY_TTL_MS, loadChatHistory, saveChatHistory, type ChatMessage } from "@/utils/chatStorage"
+import {
+  CHAT_HISTORY_TTL_MS,
+  loadChatHistory,
+  saveChatHistory,
+  type ChatMessage,
+} from "./chatStorage"
 
 const STORAGE_KEY = "agent_chat_history"
 
