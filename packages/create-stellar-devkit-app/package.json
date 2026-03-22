@@ -10,6 +10,7 @@
     "templates"
   ],
   "scripts": {
+    "prebuild": "npm run build --workspace=stellar-agent-kit && npm run build --workspace=x402-stellar-sdk",
     "build": "tsup",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build"

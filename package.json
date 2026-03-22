@@ -13,7 +13,10 @@
     "onboarding"
   ],
   "scripts": {
-    "build": "npm run build:root && npm run build:agent-kit && npm run build:x402 && npm run build --workspaces --if-present",
+    "build": "npm run build:notice && npm run build:root && npm run build:agent-kit && npm run build:x402 && npm run build --workspaces --if-present",
+    "build:notice": "node -e \"console.warn('Warning: prefer npm run build:ordered for deterministic workspace build order')\"",
+    "build:ordered": "npm run build --workspace=stellar-agent-kit && npm run build --workspace=x402-stellar-sdk && npm run build --workspace=stellar-devkit-mcp && npm run build --workspace=create-stellar-devkit-app",
+    "check-build": "node scripts/check-build.js",
     "build:root": "tsc",
     "build:agent-kit": "npm run build -w packages/stellar-agent-kit",
     "build:x402": "npm run build -w packages/x402-stellar-sdk",

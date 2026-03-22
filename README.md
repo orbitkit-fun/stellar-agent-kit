@@ -40,6 +40,49 @@ npm install
 npm run build
 ```
 
+### Build Order Fix
+
+Workspace builds can fail with `module not found` errors when dependent packages are built before internal SDK packages are compiled. To avoid that, use the ordered build script:
+
+```bash
+npm run build:ordered
+```
+
+`build:ordered` enforces this sequence:
+
+1. `stellar-agent-kit`
+2. `x402-stellar-sdk`
+3. `stellar-devkit-mcp`
+4. `create-stellar-devkit-app`
+
+The default `npm run build` script is still available, but `npm run build:ordered` is recommended for consistent workspace linking.
+
+### Troubleshooting `module not found`
+
+- Run `npm run check-build` from repository root.
+- If prompted, run `npm run build:ordered`.
+- Re-run your original package build command.
+
+`stellar-devkit-mcp` and `create-stellar-devkit-app` now include `prebuild` guards that build internal dependencies first, so individual package builds work reliably.
+
+### Workspace Build Test Scenarios
+
+1. **Clean repo** (delete all `dist` folders)
+  - macOS/Linux: `rm -rf packages/*/dist`
+  - Windows PowerShell: `Remove-Item -Recurse -Force packages/*/dist`
+2. **Run default build**
+  - `npm run build` (should show warning recommending ordered build)
+3. **Run ordered build**
+  - `npm run build:ordered` (should succeed)
+4. **Build MCP package individually**
+  - `cd packages/stellar-devkit-mcp && npm run build` (should succeed due to `prebuild`)
+5. **Build Create App package individually**
+  - `cd packages/create-stellar-devkit-app && npm run build` (should succeed due to `prebuild`)
+6. **Simulate missing dependency**
+  - Delete `packages/stellar-agent-kit/dist` and/or `packages/x402-stellar-sdk/dist`
+  - Run `npm run check-build`
+  - Verify error includes: `Please run npm run build:ordered`
+
 ---
 
 ## Quick start

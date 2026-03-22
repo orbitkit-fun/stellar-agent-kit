@@ -6,13 +6,14 @@
   "bin": "./dist/index.js",
   "main": "./dist/index.js",
   "scripts": {
+    "prebuild": "npm run build --workspace=stellar-agent-kit && npm run build --workspace=x402-stellar-sdk",
     "build": "tsup",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
-    "stellar-agent-kit": "*"
+    "stellar-agent-kit": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.5.0",
