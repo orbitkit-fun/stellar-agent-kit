@@ -4,13 +4,16 @@
  */
 
 import { Keypair, Asset, TransactionBuilder, Operation, Networks, Horizon } from "@stellar/stellar-sdk";
-import { getNetworkConfig, type NetworkConfig } from "./config/networks.js";
+import { getNetworkConfig, type NetworkConfig, type NetworkName } from "./config/networks.js";
 import { createDexClient, type DexAsset, type QuoteResult, type SwapResult } from "./dex/index.js";
 import { createReflectorOracle, type OracleAsset, type PriceData } from "./oracle/index.js";
 import { lendingSupply as blendSupply, lendingBorrow as blendBorrow, type LendingSupplyArgs, type LendingBorrowArgs, type LendingResult } from "./lending/index.js";
 
-/** This project is mainnet-only. */
-export type StellarNetwork = "mainnet";
+export type StellarNetwork = NetworkName;
+
+function getNetworkPassphrase(network: StellarNetwork): string {
+  return network === "testnet" ? Networks.TESTNET : Networks.PUBLIC;
+}
 
 export class StellarAgentKit {
   public readonly keypair: Keypair;
@@ -22,12 +25,9 @@ export class StellarAgentKit {
   private _oracle: ReturnType<typeof createReflectorOracle> | null = null;
 
   constructor(secretKey: string, network: StellarNetwork = "mainnet") {
-    if (network !== "mainnet") {
-      throw new Error("This project is mainnet-only. Use network: 'mainnet'.");
-    }
     this.keypair = Keypair.fromSecret(secretKey.trim());
-    this.network = "mainnet";
-    this.config = getNetworkConfig();
+    this.network = network;
+    this.config = getNetworkConfig(network);
   }
 
   /**
@@ -111,7 +111,7 @@ export class StellarAgentKit {
   async createAccount(destination: string, startingBalance: string): Promise<{ hash: string }> {
     this.ensureInitialized();
     if (!this._horizon) throw new Error("Horizon not initialized");
-    const networkPassphrase = Networks.PUBLIC;
+    const networkPassphrase = getNetworkPassphrase(this.network);
     const sourceAccount = await this._horizon.loadAccount(this.keypair.publicKey());
     const tx = new TransactionBuilder(sourceAccount, {
       fee: "100",
@@ -143,7 +143,7 @@ export class StellarAgentKit {
     this.ensureInitialized();
     if (!this._horizon) throw new Error("Horizon not initialized");
 
-    const networkPassphrase = Networks.PUBLIC;
+    const networkPassphrase = getNetworkPassphrase(this.network);
     const sourceAccount = await this._horizon.loadAccount(this.keypair.publicKey());
 
     const asset =
@@ -194,7 +194,7 @@ export class StellarAgentKit {
     const pathAssets = path.map((p) =>
       p.assetCode === "XLM" && !p.issuer ? Asset.native() : new Asset(p.assetCode, p.issuer!)
     );
-    const networkPassphrase = Networks.PUBLIC;
+    const networkPassphrase = getNetworkPassphrase(this.network);
     const sourceAccount = await this._horizon.loadAccount(this.keypair.publicKey());
     const tx = new TransactionBuilder(sourceAccount, {
       fee: "100",

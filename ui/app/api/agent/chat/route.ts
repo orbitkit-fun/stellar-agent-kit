@@ -2,9 +2,12 @@ import { NextRequest, NextResponse } from "next/server"
 import { getNetworkConfig } from "@/lib/agent-kit/config/networks"
 import { StellarClient } from "@/lib/agent-kit/core/stellarClient"
 import { SoroSwapClient } from "@/lib/agent-kit/defi/soroSwapClient"
+import { getUiLlmEnv } from "@/lib/env"
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+const OPENAI_URL = "https://api.openai.com/v1/chat/completions"
 const MODEL = "llama-3.1-8b-instant"
+const llmEnv = getUiLlmEnv("UI agent chat API")
 
 const MAINNET_XLM = "CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA"
 const MAINNET_USDC = "CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75"
@@ -132,8 +135,7 @@ async function runTool(
   }
 }
 
-async function groqChat(
-  apiKey: string,
+async function llmChat(
   messages: ChatMessage[],
   toolChoice: "auto" | "none" = "auto"
 ): Promise<{ message: ChatMessage; content: string | null; tool_calls?: ChatMessage extends { tool_calls?: infer T } ? T : never }> {
@@ -143,17 +145,17 @@ async function groqChat(
     tools: TOOLS,
     tool_choice: toolChoice,
   }
-  const res = await fetch(GROQ_URL, {
+  const res = await fetch(llmEnv.provider === "groq" ? GROQ_URL : OPENAI_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${llmEnv.apiKey}`,
     },
     body: JSON.stringify(body),
   })
   if (!res.ok) {
     const t = await res.text()
-    throw new Error(`Groq API error ${res.status}: ${t}`)
+    throw new Error(`LLM API error ${res.status}: ${t}`)
   }
   const data = (await res.json()) as {
     choices?: Array<{ message?: { role: string; content: string | null; tool_calls?: Array<{ id: string; type: string; function: { name: string; arguments: string } }> } }>
@@ -177,7 +179,6 @@ async function groqChat(
 }
 
 async function executeAgentTurn(
-  apiKey: string,
   messages: ChatMessage[],
   assistantMessage: ChatMessage,
   publicAddress?: string | null
@@ -213,9 +214,9 @@ async function executeAgentTurn(
     }
     current.push({ role: "tool", tool_call_id: tc.id, content: result })
   }
-  const next = await groqChat(apiKey, current)
+  const next = await llmChat(current)
   const nextMsg = next.message as ChatMessage
-  const recursive = await executeAgentTurn(apiKey, current, nextMsg, publicAddress)
+  const recursive = await executeAgentTurn(current, nextMsg, publicAddress)
   return {
     content: recursive.content,
     quote: recursive.quote ?? lastQuote,
@@ -227,17 +228,10 @@ async function executeAgentTurn(
  * Body: { messages: ChatMessage[], publicAddress?: string }
  * Returns: { content: string, quote?: AgentChatQuote } or { error: string }
  * When publicAddress is sent (connected wallet), the agent uses it for balance and swap; optional quote is returned when the agent ran get_swap_quote so the UI can show Approve.
- * Requires GROQ_API_KEY in env.
+ * Requires GROQ_API_KEY or OPENAI_API_KEY in env.
  */
 export async function POST(request: NextRequest) {
   try {
-    const apiKey = process.env.GROQ_API_KEY
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "Agent requires GROQ_API_KEY. Set it in environment." },
-        { status: 503 }
-      )
-    }
     const { messages, publicAddress } = (await request.json()) as {
       messages?: ChatMessage[]
       publicAddress?: string | null
@@ -265,11 +259,10 @@ export async function POST(request: NextRequest) {
       ...messages,
     ]
 
-    const response = await groqChat(apiKey, messagesWithContext)
+    const response = await llmChat(messagesWithContext)
     const assistantMessage = response.message as ChatMessage
     if (response.tool_calls?.length) {
       const result = await executeAgentTurn(
-        apiKey,
         messagesWithContext,
         assistantMessage,
         normalizedAddress

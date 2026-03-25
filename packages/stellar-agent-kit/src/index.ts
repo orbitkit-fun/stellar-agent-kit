@@ -1,5 +1,6 @@
 export { StellarAgentKit, type StellarNetwork } from "./agent.js";
 export { getNetworkConfig, networks, type NetworkConfig, type NetworkName } from "./config/networks.js";
+export { pickEnv, readEnv, validateEnv, type EnvSource } from "./config/env.js";
 export {
   MAINNET_ASSETS,
   TESTNET_ASSETS,

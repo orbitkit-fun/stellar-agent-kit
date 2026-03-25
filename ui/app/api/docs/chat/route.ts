@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
+import { getUiLlmEnv } from "@/lib/env"
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 const OPENAI_URL = "https://api.openai.com/v1/chat/completions"
 const MODEL = "llama-3.1-8b-instant"
+const llmEnv = getUiLlmEnv("UI docs assistant API")
 
 const DOCS_SYSTEM = `You are a helpful assistant for Stellar DevKit documentation. Answer questions about:
 - stellar-agent-kit: StellarAgentKit, getBalances, sendPayment, createAccount, pathPayment, dexGetQuote, dexSwap, dexSwapExactIn, getPrice (Reflector), lendingSupply/lendingBorrow (Blend). Mainnet only. Initialize with new StellarAgentKit(secretKey, "mainnet") then await agent.initialize().
@@ -17,13 +19,6 @@ type Message = { role: "user" | "assistant" | "system"; content: string }
 
 export async function POST(request: NextRequest) {
   try {
-    const apiKey = process.env.GROQ_API_KEY ?? process.env.OPENAI_API_KEY
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "Docs assistant requires GROQ_API_KEY or OPENAI_API_KEY in environment." },
-        { status: 503 }
-      )
-    }
     const body = await request.json()
     const messages = (body.messages ?? []) as Message[]
     if (!Array.isArray(messages) || messages.length === 0) {
@@ -32,8 +27,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-    const url = process.env.GROQ_API_KEY ? GROQ_URL : OPENAI_URL
-    const model = process.env.GROQ_API_KEY ? MODEL : "gpt-4o-mini"
+    const url = llmEnv.provider === "groq" ? GROQ_URL : OPENAI_URL
+    const model = llmEnv.provider === "groq" ? MODEL : "gpt-4o-mini"
     const payload = {
       model,
       messages: [
@@ -45,7 +40,7 @@ export async function POST(request: NextRequest) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${llmEnv.apiKey}`,
       },
       body: JSON.stringify(payload),
     })

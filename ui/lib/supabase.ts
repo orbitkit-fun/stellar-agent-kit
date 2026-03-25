@@ -1,15 +1,15 @@
 import { createClient } from "@supabase/supabase-js"
+import { getSupabaseAdminEnv } from "@/lib/env"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+const supabaseEnv = getSupabaseAdminEnv()
 
 /**
  * Returns a Supabase admin client (service role — bypasses RLS).
  * Only call server-side. Returns null if env vars are not configured.
  */
 export function getSupabaseAdmin() {
-  if (!supabaseUrl || !supabaseServiceKey) return null
-  return createClient(supabaseUrl, supabaseServiceKey, {
+  if (!supabaseEnv) return null
+  return createClient(supabaseEnv.url, supabaseEnv.serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   })
 }

@@ -2,6 +2,12 @@ import { createInterface } from "readline";
 import type { Command } from "commander";
 import { tools } from "../tools/agentTools.js";
 
+type AgentClientConfig = {
+  apiKey: string;
+  baseURL?: string;
+  model: string;
+};
+
 /** Minimal type for OpenAI-compatible client (avoids duplicate module resolution with dynamic import). */
 type OpenAIClient = {
   chat: {
@@ -113,6 +119,43 @@ function readLine(prompt: string): Promise<string> {
   });
 }
 
+function readConfiguredEnv(name: "GROQ_API_KEY" | "OPENAI_API_KEY"): string | undefined {
+  const value = process.env[name]?.trim();
+  return value ? value : undefined;
+}
+
+function getAgentClientConfig(apiKeyOverride?: string): AgentClientConfig {
+  const explicitApiKey = apiKeyOverride?.trim();
+  if (explicitApiKey) {
+    return {
+      apiKey: explicitApiKey,
+      baseURL: "https://api.groq.com/openai/v1",
+      model: "llama-3.1-8b-instant",
+    };
+  }
+
+  const groqApiKey = readConfiguredEnv("GROQ_API_KEY");
+  if (groqApiKey) {
+    return {
+      apiKey: groqApiKey,
+      baseURL: "https://api.groq.com/openai/v1",
+      model: "llama-3.1-8b-instant",
+    };
+  }
+
+  const openaiApiKey = readConfiguredEnv("OPENAI_API_KEY");
+  if (openaiApiKey) {
+    return {
+      apiKey: openaiApiKey,
+      model: "gpt-4o-mini",
+    };
+  }
+
+  throw new Error(
+    "Missing configuration for CLI agent:\n- one of `GROQ_API_KEY`, `OPENAI_API_KEY`\nYou can also pass `--api-key <key>` to use a Groq-compatible endpoint."
+  );
+}
+
 /** Execute tool by name with parsed args; return string for the model. */
 async function runOneTool(name: string, args: Record<string, unknown>): Promise<string> {
   // Hide private keys in debug output for security
@@ -185,20 +228,22 @@ export function registerAgentCommand(program: Command): void {
   program
     .command("agent")
     .description("Chat with Stellar DeFi agent (balance, swap quotes)")
-    .option("--api-key <key>", "Groq API key (or set GROQ_API_KEY)")
+    .option("--api-key <key>", "LLM API key for Groq-compatible endpoint")
     .action(async (options: { apiKey?: string }) => {
-      const apiKey = options.apiKey ?? process.env.GROQ_API_KEY;
-      if (!apiKey) {
-        console.error("Error: Set GROQ_API_KEY or pass --api-key <key>");
+      let clientConfig: AgentClientConfig;
+      try {
+        clientConfig = getAgentClientConfig(options.apiKey);
+      } catch (error) {
+        console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
         process.exit(1);
       }
 
       const { default: OpenAI } = await import("openai");
       const openai = new OpenAI({
-        apiKey,
-        baseURL: "https://api.groq.com/openai/v1",
+        apiKey: clientConfig.apiKey,
+        ...(clientConfig.baseURL ? { baseURL: clientConfig.baseURL } : {}),
       });
-      const model = "llama-3.1-8b-instant";
+      const model = clientConfig.model;
 
       console.log("Stellar DeFi Agent. Commands: check balance, get swap quotes. Type 'exit' to quit.\n");
 

@@ -5,7 +5,6 @@
 import { Keypair, TransactionBuilder, Networks } from "@stellar/stellar-sdk";
 import { rpc } from "@stellar/stellar-sdk";
 import type { NetworkConfig } from "../config/networks.js";
-import { getNetworkConfig } from "../config/networks.js";
 import type { DexAsset, QuoteResult, SwapResult } from "./types.js";
 
 const SOROSWAP_API_BASE = "https://api.soroswap.finance";
@@ -32,9 +31,11 @@ export function createSoroSwapDexClient(
   apiKey?: string
 ): { getQuote: (from: DexAsset, to: DexAsset, amount: string) => Promise<QuoteResult>; executeSwap: (secretKey: string, quote: QuoteResult) => Promise<SwapResult> } {
   const key = apiKey ?? process.env.SOROSWAP_API_KEY;
+  const networkName = networkConfig.friendbotUrl ? "testnet" : "mainnet";
+  const networkPassphrase = networkName === "testnet" ? Networks.TESTNET : Networks.PUBLIC;
 
   async function getQuote(from: DexAsset, to: DexAsset, amount: string): Promise<QuoteResult> {
-    const url = `${SOROSWAP_API_BASE}/quote?network=mainnet`;
+    const url = `${SOROSWAP_API_BASE}/quote?network=${networkName}`;
     const body = {
       assetIn: assetToApiString(from),
       assetOut: assetToApiString(to),
@@ -56,7 +57,7 @@ export function createSoroSwapDexClient(
     if (!key) throw new Error("executeSwap requires SOROSWAP_API_KEY");
     const keypair = Keypair.fromSecret(secretKey.trim());
     const fromAddress = keypair.publicKey();
-    const buildUrl = `${SOROSWAP_API_BASE}/quote/build?network=mainnet`;
+    const buildUrl = `${SOROSWAP_API_BASE}/quote/build?network=${networkName}`;
     const buildRes = await fetch(buildUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
@@ -66,11 +67,9 @@ export function createSoroSwapDexClient(
     const buildData = (await buildRes.json()) as { xdr?: string };
     const xdrBase64 = buildData?.xdr;
     if (!xdrBase64 || typeof xdrBase64 !== "string") throw new Error("SoroSwap build response missing xdr");
-    const config = getNetworkConfig("mainnet");
-    const networkPassphrase = Networks.PUBLIC;
     const tx = TransactionBuilder.fromXDR(xdrBase64, networkPassphrase);
     tx.sign(keypair);
-    const server = new rpc.Server(config.sorobanRpcUrl, { allowHttp: config.sorobanRpcUrl.startsWith("http:") });
+    const server = new rpc.Server(networkConfig.sorobanRpcUrl, { allowHttp: networkConfig.sorobanRpcUrl.startsWith("http:") });
     const sendResult = await server.sendTransaction(tx);
     if (sendResult.errorResult) throw new Error(`Soroban sendTransaction failed: ${String(sendResult.errorResult)}`);
     return { hash: sendResult.hash, status: sendResult.status ?? "PENDING" };
