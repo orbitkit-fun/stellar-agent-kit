@@ -27,7 +27,7 @@
 npm install stellar-agent-kit
 ```
 
-Optional, for DEX swaps: [SoroSwap API key](https://soroswap.com) (or use contract simulation). For the CLI agent: `GROQ_API_KEY` or pass `--api-key`.
+Optional, for DEX swaps: [SoroSwap API key](https://soroswap.com) (or use contract simulation). For the CLI agent: `GROQ_API_KEY`, or `OPENAI_API_KEY`, or pass `--api-key`.
 
 ### Develop from this repository
 
@@ -83,7 +83,7 @@ Run from the repo root after `npm run build` (or use the published `stellar-agen
 |--------|--------|
 | **Balance** | `node dist/index.js balance GABC... [--network=mainnet]` |
 | **Pay** | `node dist/index.js pay S... G... 10 [--network=mainnet]` |
-| **Agent** | `node dist/index.js agent` (set `GROQ_API_KEY` or `--api-key`) |
+| **Agent** | `node dist/index.js agent` (uses `GROQ_API_KEY`, then `OPENAI_API_KEY`, or `--api-key`) |
 
 Balance output: JSON array of `{ code, issuer, balance }`. Agent: interactive loop; try “What’s the balance of G…” or “Get a quote to swap 10 XLM to USDC”. Type `exit` to quit.
 
@@ -100,7 +100,7 @@ Balance output: JSON array of `{ code, issuer, balance }`. Agent: interactive lo
 ## Requirements
 
 - **Node.js** ≥ 18  
-- **Agent CLI:** `GROQ_API_KEY` (or `--api-key`)  
+- **Agent CLI:** `GROQ_API_KEY`, or `OPENAI_API_KEY`, or `--api-key`  
 - **DEX (optional):** SoroSwap API key for aggregator; otherwise simulation is used where supported  
 
 ---

@@ -28,6 +28,13 @@ type AssistantMessage = {
 };
 type ChatMessage = AssistantMessage | { role: "tool"; tool_call_id: string; content: string } | { role: "user"; content: string };
 
+type AgentProviderConfig = {
+  apiKey: string;
+  baseURL: string;
+  model: string;
+  providerLabel: "Groq" | "OpenAI";
+};
+
 /** OpenAI-compatible tool definitions (JSON Schema for parameters). */
 function toOpenAITools(): ChatCompletionTool[] {
   return [
@@ -185,22 +192,18 @@ export function registerAgentCommand(program: Command): void {
   program
     .command("agent")
     .description("Chat with Stellar DeFi agent (balance, swap quotes)")
-    .option("--api-key <key>", "Groq API key (or set GROQ_API_KEY)")
+    .option("--api-key <key>", "LLM API key override (otherwise uses GROQ_API_KEY, then OPENAI_API_KEY)")
     .action(async (options: { apiKey?: string }) => {
-      const apiKey = options.apiKey ?? process.env.GROQ_API_KEY;
-      if (!apiKey) {
-        console.error("Error: Set GROQ_API_KEY or pass --api-key <key>");
-        process.exit(1);
-      }
+      const provider = resolveAgentProvider(options.apiKey);
 
       const { default: OpenAI } = await import("openai");
       const openai = new OpenAI({
-        apiKey,
-        baseURL: "https://api.groq.com/openai/v1",
+        apiKey: provider.apiKey,
+        baseURL: provider.baseURL,
       });
-      const model = "llama-3.1-8b-instant";
+      const model = provider.model;
 
-      console.log("Stellar DeFi Agent. Commands: check balance, get swap quotes. Type 'exit' to quit.\n");
+      console.log(`Stellar DeFi Agent (${provider.providerLabel}). Commands: check balance, get swap quotes. Type 'exit' to quit.\n`);
 
       const history: ChatMessage[] = [];
 
@@ -237,4 +240,41 @@ export function registerAgentCommand(program: Command): void {
         }
       }
     });
+}
+
+function resolveAgentProvider(apiKeyOverride?: string): AgentProviderConfig {
+  const override = apiKeyOverride?.trim();
+  if (override) {
+    return {
+      apiKey: override,
+      baseURL: "https://api.groq.com/openai/v1",
+      model: "llama-3.1-8b-instant",
+      providerLabel: "Groq",
+    };
+  }
+
+  const groqApiKey = process.env.GROQ_API_KEY?.trim();
+  if (groqApiKey) {
+    return {
+      apiKey: groqApiKey,
+      baseURL: "https://api.groq.com/openai/v1",
+      model: "llama-3.1-8b-instant",
+      providerLabel: "Groq",
+    };
+  }
+
+  const openaiApiKey = process.env.OPENAI_API_KEY?.trim();
+  if (openaiApiKey) {
+    return {
+      apiKey: openaiApiKey,
+      baseURL: "https://api.openai.com/v1",
+      model: "gpt-4o-mini",
+      providerLabel: "OpenAI",
+    };
+  }
+
+  console.error("Error: missing LLM credentials for `agent`.");
+  console.error("Set GROQ_API_KEY, or set OPENAI_API_KEY, or pass --api-key <key>.");
+  console.error("If you use --api-key without another flag, the CLI assumes a Groq-compatible key.");
+  process.exit(1);
 }

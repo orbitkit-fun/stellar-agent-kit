@@ -443,7 +443,7 @@ npx create-stellar-devkit-app my-app --skip-install`}
               className="mb-4"
             />
             <h3 className="text-lg font-medium text-[#a78bfa] mt-6 mb-2">agent</h3>
-            <p className="text-zinc-400 text-sm mb-2">Interactive chat with tools: check_balance, swap_asset, get_swap_quote, create_trustline. Uses <code className="rounded bg-zinc-800/90 px-1.5 py-0.5 text-zinc-200 font-mono text-[0.9em]">GROQ_API_KEY</code> or <code className="rounded bg-zinc-800/90 px-1.5 py-0.5 text-zinc-200 font-mono text-[0.9em]">--api-key</code> (OpenAI-compatible).</p>
+            <p className="text-zinc-400 text-sm mb-2">Interactive chat with tools: check_balance, swap_asset, get_swap_quote, create_trustline. Uses <code className="rounded bg-zinc-800/90 px-1.5 py-0.5 text-zinc-200 font-mono text-[0.9em]">GROQ_API_KEY</code>, falls back to <code className="rounded bg-zinc-800/90 px-1.5 py-0.5 text-zinc-200 font-mono text-[0.9em]">OPENAI_API_KEY</code>, or accepts <code className="rounded bg-zinc-800/90 px-1.5 py-0.5 text-zinc-200 font-mono text-[0.9em]">--api-key</code>.</p>
             <CodeWindow
               code={`node dist/index.js agent [--api-key <key>]
 # At prompt: "What's the balance of G...?" or "Get a quote to swap 10 XLM to USDC"`}
@@ -503,8 +503,8 @@ npx create-stellar-devkit-app my-app --skip-install`}
                   <tr className="border-b border-zinc-800"><td className="p-3 font-mono">DODO_PAYMENTS_PRODUCT_BUILDER</td><td className="p-3">ui (Pricing)</td><td className="p-3">Dodo product ID for Builder plan (create one-time product in dashboard).</td></tr>
                   <tr className="border-b border-zinc-800"><td className="p-3 font-mono">DODO_PAYMENTS_PRODUCT_PRO</td><td className="p-3">ui (Pricing)</td><td className="p-3">Dodo product ID for Pro plan (create one-time product in dashboard).</td></tr>
                   <tr className="border-b border-zinc-800"><td className="p-3 font-mono">DODO_PAYMENTS_ENVIRONMENT</td><td className="p-3">ui (Pricing)</td><td className="p-3">Optional: <code className="rounded bg-zinc-800/90 px-1.5 py-0.5 text-zinc-200 font-mono text-[0.9em]">test_mode</code> or <code className="rounded bg-zinc-800/90 px-1.5 py-0.5 text-zinc-200 font-mono text-[0.9em]">live_mode</code>. Default: test_mode.</td></tr>
-                  <tr className="border-b border-zinc-800"><td className="p-3 font-mono">GROQ_API_KEY</td><td className="p-3">CLI agent, Docs assistant</td><td className="p-3">Or OPENAI_API_KEY for docs assistant; CLI can use --api-key.</td></tr>
-                  <tr><td className="p-3 font-mono">OPENAI_API_KEY</td><td className="p-3">Docs assistant</td><td className="p-3">Optional; used if GROQ_API_KEY is not set.</td></tr>
+                  <tr className="border-b border-zinc-800"><td className="p-3 font-mono">GROQ_API_KEY</td><td className="p-3">CLI agent, Docs assistant</td><td className="p-3">Preferred for the CLI agent and docs assistant. CLI also accepts --api-key.</td></tr>
+                  <tr><td className="p-3 font-mono">OPENAI_API_KEY</td><td className="p-3">CLI agent, Docs assistant</td><td className="p-3">Optional fallback when GROQ_API_KEY is not set.</td></tr>
                 </tbody>
               </table>
             </div>
