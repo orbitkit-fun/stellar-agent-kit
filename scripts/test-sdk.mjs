@@ -12,8 +12,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const distPath = join(__dirname, "..", "packages", "stellar-agent-kit", "dist", "index.js");
 
 if (!existsSync(distPath)) {
-  console.error("Error: packages/stellar-agent-kit/dist/index.js not found.");
-  console.error("Run from repo root: npm run build");
+  console.error("Stellar Agent Kit is not built. Please run: npm run build from the repo root.");
   process.exit(1);
 }
 
