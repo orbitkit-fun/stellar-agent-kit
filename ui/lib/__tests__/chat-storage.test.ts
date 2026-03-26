@@ -60,7 +60,6 @@ describe("chat-storage abstraction", () => {
 
     // Simulate another tab writing different messages and ensure we read them back
     const nextMessages: ChatMessage[] = [{ role: "user", content: "next" }]
-    ls.setItem.mock.calls = []
     ls.getItem.mockImplementation((k: string) =>
       k === key ? JSON.stringify(nextMessages) : null
     )
