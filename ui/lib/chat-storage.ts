@@ -10,23 +10,36 @@ export interface ChatStorage {
 }
 
 const SESSION_ID_KEY = "agent_chat_session_id"
+const CHAT_HISTORY_PREFIX = "agent_chat_history_"
+
+function isLocalStorageSafe(): boolean {
+  if (typeof window === "undefined") return false
+  try {
+    // Access may throw in some environments (e.g. Safari private mode).
+    void window.localStorage
+    return true
+  } catch {
+    return false
+  }
+}
 
 export function getOrCreateChatSessionId(): string {
-  if (typeof window === "undefined" || !("localStorage" in window)) {
-    // Fallback: ephemeral ID
-    return generateRandomId()
-  }
-
-  const existing = window.localStorage.getItem(SESSION_ID_KEY)
-  if (existing && existing.length > 0) return existing
-
-  const id = generateRandomId()
   try {
+    if (!isLocalStorageSafe()) {
+      // Fallback: ephemeral ID
+      return generateRandomId()
+    }
+
+    const existing = window.localStorage.getItem(SESSION_ID_KEY)
+    if (existing && existing.length > 0) return existing
+
+    const id = generateRandomId()
     window.localStorage.setItem(SESSION_ID_KEY, id)
+    return id
   } catch {
     // Ignore storage errors; caller can still use the in-memory ID
+    return generateRandomId()
   }
-  return id
 }
 
 function generateRandomId(): string {
@@ -41,11 +54,11 @@ export class LocalStorageChatStorage implements ChatStorage {
   private readonly storageKey: string
 
   constructor(sessionId: string) {
-    this.storageKey = `agent_chat_history_${sessionId}`
+    this.storageKey = getChatStorageKey(sessionId)
   }
 
   load(): ChatMessage[] {
-    if (typeof window === "undefined" || !("localStorage" in window)) return []
+    if (!isLocalStorageSafe()) return []
     try {
       const raw = window.localStorage.getItem(this.storageKey)
       if (!raw) return []
@@ -64,7 +77,7 @@ export class LocalStorageChatStorage implements ChatStorage {
   }
 
   save(messages: ChatMessage[]): void {
-    if (typeof window === "undefined" || !("localStorage" in window)) return
+    if (!isLocalStorageSafe()) return
     try {
       window.localStorage.setItem(this.storageKey, JSON.stringify(messages))
     } catch {
@@ -73,13 +86,17 @@ export class LocalStorageChatStorage implements ChatStorage {
   }
 
   clear(): void {
-    if (typeof window === "undefined" || !("localStorage" in window)) return
+    if (!isLocalStorageSafe()) return
     try {
       window.localStorage.removeItem(this.storageKey)
     } catch {
       // Ignore storage errors
     }
   }
+}
+
+export function getChatStorageKey(sessionId: string): string {
+  return `${CHAT_HISTORY_PREFIX}${sessionId}`
 }
 
 // Async variant for future API/database-backed storage.

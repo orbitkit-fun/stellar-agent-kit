@@ -11,6 +11,7 @@ import { toast } from "sonner"
 import {
   LocalStorageChatStorage,
   getOrCreateChatSessionId,
+  getChatStorageKey,
   type ChatMessage as StoredChatMessage,
 } from "@/lib/chat-storage"
 
@@ -37,6 +38,7 @@ export function AgentChat() {
   const [pendingQuote, setPendingQuote] = useState<AgentQuote | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const hasLoadedFromStorage = useRef(false)
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -50,16 +52,45 @@ export function AgentChat() {
   )
 
   useEffect(() => {
-    if (!chatStorage) return
+    if (!chatStorage || hasLoadedFromStorage.current) return
     const stored = chatStorage.load()
     if (stored.length) {
       setMessages(stored.map((m: StoredChatMessage) => ({ role: m.role, content: m.content })))
     }
+    hasLoadedFromStorage.current = true
   }, [chatStorage])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
+
+  // Multi-tab sync: when another tab updates this session's history in localStorage,
+  // reflect the new state here.
+  useEffect(() => {
+    if (!sessionId || typeof window === "undefined") return
+    const key = getChatStorageKey(sessionId)
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.storageArea !== window.localStorage) return
+      if (event.key !== key) return
+
+      if (!event.newValue) {
+        setMessages([])
+        return
+      }
+
+      try {
+        const parsed = JSON.parse(event.newValue) as StoredChatMessage[]
+        if (!Array.isArray(parsed)) return
+        setMessages(parsed.map((m) => ({ role: m.role, content: m.content })))
+      } catch {
+        // Ignore malformed payloads from storage
+      }
+    }
+
+    window.addEventListener("storage", handleStorage)
+    return () => window.removeEventListener("storage", handleStorage)
+  }, [sessionId])
 
   const persistMessages = (next: Message[]) => {
     chatStorage?.save(next.map((m) => ({ role: m.role, content: m.content })))
