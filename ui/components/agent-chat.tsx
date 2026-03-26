@@ -8,7 +8,11 @@ import { Networks } from "@stellar/stellar-sdk"
 import { useAccount } from "@/hooks/use-account"
 import { useSoroSwap } from "@/hooks/use-soroswap"
 import { toast } from "sonner"
-import { LocalStorageChatStorage, type ChatMessage as StoredChatMessage } from "@/lib/chat-storage"
+import {
+  LocalStorageChatStorage,
+  getOrCreateChatSessionId,
+  type ChatMessage as StoredChatMessage,
+} from "@/lib/chat-storage"
 
 type Message = { role: "user" | "assistant"; content: string }
 
@@ -25,6 +29,7 @@ export function AgentChat() {
   const { account } = useAccount()
   const { buildSwap, submitSwap, isLoading: swapLoading } = useSoroSwap()
   const [messages, setMessages] = useState<Message[]>([])
+  const [sessionId, setSessionId] = useState<string | null>(null)
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -33,9 +38,19 @@ export function AgentChat() {
   const bottomRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  const chatStorage = useMemo(() => new LocalStorageChatStorage(), [])
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const id = getOrCreateChatSessionId()
+    setSessionId(id)
+  }, [])
+
+  const chatStorage = useMemo(
+    () => (sessionId ? new LocalStorageChatStorage(sessionId) : null),
+    [sessionId]
+  )
 
   useEffect(() => {
+    if (!chatStorage) return
     const stored = chatStorage.load()
     if (stored.length) {
       setMessages(stored.map((m: StoredChatMessage) => ({ role: m.role, content: m.content })))
@@ -47,7 +62,7 @@ export function AgentChat() {
   }, [messages])
 
   const persistMessages = (next: Message[]) => {
-    chatStorage.save(next.map((m) => ({ role: m.role, content: m.content })))
+    chatStorage?.save(next.map((m) => ({ role: m.role, content: m.content })))
   }
 
   const appendMessage = (message: Message) => {
@@ -62,7 +77,7 @@ export function AgentChat() {
     setMessages([])
     setPendingQuote(null)
     setError(null)
-    chatStorage.clear()
+    chatStorage?.clear()
   }
 
   const send = async () => {
