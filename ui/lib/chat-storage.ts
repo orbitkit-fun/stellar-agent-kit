@@ -81,3 +81,47 @@ export class LocalStorageChatStorage implements ChatStorage {
     }
   }
 }
+
+// Async variant for future API/database-backed storage.
+export interface AsyncChatStorage {
+  load(): Promise<ChatMessage[]>
+  save(messages: ChatMessage[]): Promise<void>
+  clear(): Promise<void>
+}
+
+/**
+ * Placeholder for remote (API/db) chat storage.
+ *
+ * This is intentionally a stub:
+ * - Simulates async behavior so callers can be wired with await.
+ * - Real implementation should call your backend (REST, RPC, Supabase, etc.).
+ */
+export class RemoteChatStorage implements AsyncChatStorage {
+  /**
+   * Optional base URL or identifier for the remote storage backend.
+   * Replace this with your actual API endpoint or client as needed.
+   */
+  constructor(private readonly endpoint: string = "/api/agent/chat-storage") {}
+
+  async load(): Promise<ChatMessage[]> {
+    // TODO: Replace with real API call, e.g. fetch(this.endpoint).
+    // Simulate network latency so consumers can be written as async.
+    await simulateLatency()
+    return []
+  }
+
+  async save(_messages: ChatMessage[]): Promise<void> {
+    // TODO: Send messages to remote API/database.
+    // Example (future): await fetch(this.endpoint, { method: "POST", body: JSON.stringify({ messages }) })
+    await simulateLatency()
+  }
+
+  async clear(): Promise<void> {
+    // TODO: Implement remote clear/delete for the given session.
+    await simulateLatency()
+  }
+}
+
+async function simulateLatency(durationMs = 50): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, durationMs))
+}
