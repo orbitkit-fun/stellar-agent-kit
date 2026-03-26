@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "prebuild": "cd .. && npm run build:x402",
+    "predev": "cd .. && npm run build:x402",
     "build": "next build",
     "dev": "next dev",
     "lint": "eslint .",
-    "start": "next start",
-    "prebuild": "npm run build -w packages/x402-stellar-sdk",
-    "predev": "npm run build -w packages/x402-stellar-sdk",
+    "start": "next start"
   },
   "dependencies": {
     "@allbridge/bridge-core-sdk": "^3.29.1",
