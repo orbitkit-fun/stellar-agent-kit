@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useMemo } from "react"
 import { Plus, ChevronDown, ArrowUp, X } from "lucide-react"
 import { LiquidMetalButton } from "@/components/ui/liquid-metal-button"
 import { signTransaction } from "@stellar/freighter-api"
@@ -8,6 +8,7 @@ import { Networks } from "@stellar/stellar-sdk"
 import { useAccount } from "@/hooks/use-account"
 import { useSoroSwap } from "@/hooks/use-soroswap"
 import { toast } from "sonner"
+import { LocalStorageChatStorage, type ChatMessage as StoredChatMessage } from "@/lib/chat-storage"
 
 type Message = { role: "user" | "assistant"; content: string }
 
@@ -32,9 +33,37 @@ export function AgentChat() {
   const bottomRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
+  const chatStorage = useMemo(() => new LocalStorageChatStorage(), [])
+
+  useEffect(() => {
+    const stored = chatStorage.load()
+    if (stored.length) {
+      setMessages(stored.map((m: StoredChatMessage) => ({ role: m.role, content: m.content })))
+    }
+  }, [chatStorage])
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
+
+  const persistMessages = (next: Message[]) => {
+    chatStorage.save(next.map((m) => ({ role: m.role, content: m.content })))
+  }
+
+  const appendMessage = (message: Message) => {
+    setMessages((prev) => {
+      const next = [...prev, message]
+      persistMessages(next)
+      return next
+    })
+  }
+
+  const resetChat = () => {
+    setMessages([])
+    setPendingQuote(null)
+    setError(null)
+    chatStorage.clear()
+  }
 
   const send = async () => {
     const text = input.trim()
@@ -43,7 +72,7 @@ export function AgentChat() {
     setError(null)
     setPendingQuote(null)
     const userMessage: Message = { role: "user", content: text }
-    setMessages((prev) => [...prev, userMessage])
+    appendMessage(userMessage)
     setLoading(true)
     try {
       const chatMessages = [...messages, userMessage].map((m) => ({
@@ -66,15 +95,12 @@ export function AgentChat() {
       if (!res.ok) {
         throw new Error(data.error || `Request failed: ${res.status}`)
       }
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: data.content ?? "No response." },
-      ])
+      appendMessage({ role: "assistant", content: data.content ?? "No response." })
       if (data.quote) setPendingQuote(data.quote)
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       setError(msg)
-      setMessages((prev) => [...prev, { role: "assistant", content: `Error: ${msg}` }])
+      appendMessage({ role: "assistant", content: `Error: ${msg}` })
     } finally {
       setLoading(false)
     }
