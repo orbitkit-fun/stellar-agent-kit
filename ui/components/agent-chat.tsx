@@ -20,10 +20,46 @@ type AgentQuote = {
   rawData?: unknown
 }
 
+// ─── localStorage persistence ────────────────────────────────────────────────
+const CHAT_STORAGE_KEY = "agent_chat_history"
+const CHAT_TTL_MS = 24 * 60 * 60 * 1000 // 24 h — matches issue acceptance criteria
+
+type PersistedChat = {
+  messages: Message[]
+  lastActivityAt: number
+}
+
+function loadPersistedMessages(): Message[] {
+  if (typeof window === "undefined") return []
+  try {
+    const raw = localStorage.getItem(CHAT_STORAGE_KEY)
+    if (!raw) return []
+    const { messages, lastActivityAt } = JSON.parse(raw) as PersistedChat
+    if (Date.now() - lastActivityAt > CHAT_TTL_MS) {
+      localStorage.removeItem(CHAT_STORAGE_KEY)
+      return []
+    }
+    return Array.isArray(messages) ? messages : []
+  } catch {
+    return []
+  }
+}
+
+function persistMessages(messages: Message[]) {
+  if (typeof window === "undefined") return
+  try {
+    const payload: PersistedChat = { messages, lastActivityAt: Date.now() }
+    localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(payload))
+  } catch {
+    // localStorage quota exceeded or unavailable — fail silently
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 export function AgentChat() {
   const { account } = useAccount()
   const { buildSwap, submitSwap, isLoading: swapLoading } = useSoroSwap()
-  const [messages, setMessages] = useState<Message[]>([])
+  const [messages, setMessages] = useState<Message[]>(() => loadPersistedMessages())
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -31,6 +67,11 @@ export function AgentChat() {
   const [pendingQuote, setPendingQuote] = useState<AgentQuote | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Persist whenever messages change
+  useEffect(() => {
+    persistMessages(messages)
+  }, [messages])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -109,6 +150,11 @@ export function AgentChat() {
       const msg = err instanceof Error ? err.message : String(err)
       toast.error("Swap failed", { description: msg })
     }
+  }
+
+  const clearHistory = () => {
+    setMessages([])
+    localStorage.removeItem(CHAT_STORAGE_KEY)
   }
 
   const hasMessages = messages.length > 0
@@ -199,6 +245,16 @@ export function AgentChat() {
                 <span className="text-white font-medium">DeFi Agent</span>
                 <ChevronDown className="w-4 h-4 text-zinc-500" />
               </button>
+              {hasMessages && (
+                <button
+                  type="button"
+                  onClick={clearHistory}
+                  className="px-2 py-1.5 rounded-lg hover:bg-zinc-800 hover:text-zinc-300 transition-colors text-xs text-zinc-500"
+                  title="Clear chat history"
+                >
+                  Clear history
+                </button>
+              )}
             </div>
             <LiquidMetalButton
               type="submit"
