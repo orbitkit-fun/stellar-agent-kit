@@ -7,9 +7,9 @@ type ChatHistory = {
   messages: ChatMessage[]
   lastActivityAt: number
 }
-const STORAGE_KEY = "agent_chat_history"
+export const STORAGE_KEY = "agent_chat_history"
 export const CHAT_HISTORY_TTL_MS = 24 * 60 * 60 * 1000
-const STORAGE_PREFIX_V2 = "agent_chat_history_v2"
+const SESSION_ID_STORAGE_KEY = "agent_chat_session_id"
 
 export interface ChatStorage {
   load(sessionId: string): ChatMessage[]
@@ -19,7 +19,7 @@ export interface ChatStorage {
 
 export class LocalStorageChatStorage implements ChatStorage {
   private getStorageKey(sessionId: string): string {
-    return `${STORAGE_PREFIX_V2}:${sessionId}`
+    return `agent_chat_history_${sessionId}`
   }
 
   save(sessionId: string, messages: ChatMessage[]): void {
@@ -117,9 +117,45 @@ export class LocalStorageChatStorage implements ChatStorage {
   }
 }
 
+export class RemoteChatStorage implements ChatStorage {
+  load(_sessionId: string): ChatMessage[] {
+    // Placeholder for future remote API-backed implementation
+    return []
+  }
+
+  save(_sessionId: string, _messages: ChatMessage[]): void {
+    // Placeholder for future remote API-backed implementation
+  }
+
+  clear(_sessionId: string): void {
+    // Placeholder for future remote API-backed implementation
+  }
+}
+
 const FALLBACK_MESSAGE_LIMITS = [500, 200, 100]
 
 const canUseStorage = (): boolean => typeof window !== "undefined" && !!window.localStorage
+
+export const getOrCreateSessionId = (): string | null => {
+  if (!canUseStorage()) return null
+
+  try {
+    const existing = window.localStorage.getItem(SESSION_ID_STORAGE_KEY)
+    if (existing && typeof existing === "string" && existing.length > 0) {
+      return existing
+    }
+
+    if (typeof crypto === "undefined" || typeof crypto.randomUUID !== "function") {
+      return null
+    }
+
+    const nextId = crypto.randomUUID()
+    window.localStorage.setItem(SESSION_ID_STORAGE_KEY, nextId)
+    return nextId
+  } catch {
+    return null
+  }
+}
 
 const normalizeMessages = (messages: unknown): ChatMessage[] => {
   if (!Array.isArray(messages)) return []

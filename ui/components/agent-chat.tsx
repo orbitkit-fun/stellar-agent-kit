@@ -11,6 +11,7 @@ import { toast } from "sonner"
 import {
   loadChatHistory,
   saveChatHistory,
+  STORAGE_KEY,
   type ChatMessage,
 } from "@/utils/chatStorage"
 
@@ -34,18 +35,35 @@ export function AgentChat() {
   const [pendingQuote, setPendingQuote] = useState<AgentQuote | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const hasLoaded = useRef(false)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
   useEffect(() => {
-    setMessages(loadChatHistory())
+    const history = loadChatHistory()
+    setMessages(history)
+    hasLoaded.current = true
   }, [])
 
   useEffect(() => {
+    if (!hasLoaded.current) return
     saveChatHistory(messages)
   }, [messages])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === STORAGE_KEY) {
+        setMessages(loadChatHistory())
+      }
+    }
+
+    window.addEventListener("storage", handleStorage)
+    return () => window.removeEventListener("storage", handleStorage)
+  }, [])
 
   const send = async () => {
     const text = input.trim()
