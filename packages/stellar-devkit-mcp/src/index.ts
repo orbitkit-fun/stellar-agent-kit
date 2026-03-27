@@ -115,8 +115,11 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
   if (name === "get_sdk_snippet") {
     const op = (args?.operation as string)?.toLowerCase() || "";
     const snippets: Record<string, string> = {
+     // this is a code snippet the MCP serves to developers. They will copy-paste it directly into their projects If it shows process.env.SECRET_KEY!, they inherit the bad pattern their app will crash with a **cryptic** Stellar SDK error instead of a clear message when the env var is missing
       swap: `import { StellarAgentKit, MAINNET_ASSETS } from "stellar-agent-kit";
-const agent = new StellarAgentKit(process.env.SECRET_KEY!, "mainnet");
+const secretKey = process.env.SECRET_KEY;
+if (!secretKey) throw new Error("SECRET_KEY is required.");
+const agent = new StellarAgentKit(secretKey, "mainnet");
 await agent.initialize();
 const quote = await agent.dexGetQuote(
   { contractId: MAINNET_ASSETS.XLM.contractId },
@@ -132,8 +135,11 @@ const quote = await agent.dexGetQuote(
   { contractId: MAINNET_ASSETS.USDC.contractId },
   amount
 );`,
+// same reason as "swap" above it's a copy-paste snippet
       "x402-server": `import { x402 } from "x402-stellar-sdk/server";
-const options = { price: "1", assetCode: "XLM", network: "testnet" as const, destination: process.env.X402_DESTINATION! };
+const destination = process.env.X402_DESTINATION;
+if (!destination) throw new Error("X402_DESTINATION is required.");
+const options = { price: "1", assetCode: "XLM", network: "testnet" as const, destination };
 app.use("/api/premium", x402(options));
 app.get("/api/premium", (req, res) => res.json({ data: "Premium content" }));`,
       "x402-client": `import { x402Fetch } from "x402-stellar-sdk/client";

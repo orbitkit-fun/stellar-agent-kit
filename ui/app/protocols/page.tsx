@@ -266,7 +266,9 @@ const CODE_BY_PROTOCOL: Record<string, { filename: string; code: string }> = {
     filename: "swap-soroswap.ts",
     code: `import { StellarAgentKit, MAINNET_ASSETS } from "stellar-agent-kit";
 
-const agent = new StellarAgentKit(process.env.SECRET_KEY!, "mainnet");
+const secretKey = process.env.SECRET_KEY;
+if (!secretKey) throw new Error("SECRET_KEY is required. Set it in .env or .env.local.");
+const agent = new StellarAgentKit(secretKey, "mainnet");
 await agent.initialize();
 
 const quote = await agent.dexGetQuote(
@@ -281,7 +283,9 @@ console.log("Swap tx hash:", result.hash);`,
     filename: "lending-blend.ts",
     code: `import { StellarAgentKit, MAINNET_ASSETS, BLEND_POOLS } from "stellar-agent-kit";
 
-const agent = new StellarAgentKit(process.env.SECRET_KEY!, "mainnet");
+const secretKey = process.env.SECRET_KEY;
+if (!secretKey) throw new Error("SECRET_KEY is required. Set it in .env or .env.local.");
+const agent = new StellarAgentKit(secretKey, "mainnet");
 await agent.initialize();
 
 // Supply
@@ -302,7 +306,9 @@ await agent.lendingBorrow({
     filename: "oracle-reflector.ts",
     code: `import { StellarAgentKit, MAINNET_ASSETS } from "stellar-agent-kit";
 
-const agent = new StellarAgentKit(process.env.SECRET_KEY!, "mainnet");
+const secretKey = process.env.SECRET_KEY;
+if (!secretKey) throw new Error("SECRET_KEY is required. Set it in .env or .env.local.");
+const agent = new StellarAgentKit(secretKey, "mainnet");
 await agent.initialize();
 
 const price = await agent.getPrice({ contractId: MAINNET_ASSETS.XLM.contractId });

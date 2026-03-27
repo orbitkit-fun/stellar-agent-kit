@@ -148,7 +148,9 @@ export default function DocsPage() {
             <CodeWindow
               code={`import { StellarAgentKit, MAINNET_ASSETS } from "stellar-agent-kit";
  
-const agent = new StellarAgentKit(process.env.SECRET_KEY!, "mainnet");
+const secretKey = process.env.SECRET_KEY;
+if (!secretKey) throw new Error("SECRET_KEY is required. Set it in .env or .env.local.");
+const agent = new StellarAgentKit(secretKey, "mainnet");
 await agent.initialize();
  
 // Get a swap quote (1 XLM → USDC, 7 decimals)
@@ -316,11 +318,13 @@ await agent.lendingBorrow({ ... });`}
 import { x402 } from "x402-stellar-sdk/server";
 
 const app = express();
+const destination = process.env.X402_DESTINATION;
+if (!destination) throw new Error("X402_DESTINATION is required. Set it in .env or .env.local.");
 const options = {
   price: "1",
   assetCode: "XLM",
   network: "testnet",
-  destination: process.env.X402_DESTINATION!,
+  destination,
   memo: "premium-api",
 };
 app.use("/api/premium", x402(options));

@@ -4,11 +4,13 @@ const SERVER_SNIPPET = `import express from "express";
 import { x402 } from "x402-stellar-sdk/server";
 
 const app = express();
+const destination = process.env.X402_DESTINATION;
+if (!destination) throw new Error("X402_DESTINATION is required. Set it in .env or .env.local.");
 const options = {
   price: "1",
   assetCode: "XLM",
   network: "testnet" as const,
-  destination: process.env.X402_DESTINATION!,
+  destination,
   memo: "premium-api",
 };
 app.use("/api/premium", x402(options));

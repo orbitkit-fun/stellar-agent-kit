@@ -36,8 +36,9 @@ function FadeInSection({ children, className }: { children: ReactNode; className
 }
 
 const TRY_IT_SNIPPET = `import { StellarAgentKit, MAINNET_ASSETS } from "stellar-agent-kit";
-
-const agent = new StellarAgentKit(process.env.SECRET_KEY!, "mainnet");
+const secretKey = process.env.SECRET_KEY;
+if (!secretKey) throw new Error("SECRET_KEY is required. Set it in .env or .env.local.");
+const agent = new StellarAgentKit(secretKey, "mainnet");
 await agent.initialize();
 
 // Get a swap quote (1 XLM → USDC, 7 decimals)

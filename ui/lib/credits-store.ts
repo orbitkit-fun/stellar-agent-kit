@@ -1,37 +1,9 @@
 /**
  * Credits store — Supabase-backed with in-memory fallback.
  *
- * Supabase SQL (run once in your Supabase SQL editor):
- * ─────────────────────────────────────────────────────
- * create table if not exists credit_accounts (
- *   app_id            text primary key,
- *   balance           integer not null default 0,
- *   plan              text not null default 'free',
- *   monthly_allowance integer not null default 100,
- *   allowance_reset_at timestamptz not null default now() + interval '1 month',
- *   created_at        timestamptz not null default now(),
- *   updated_at        timestamptz not null default now()
- * );
- *
- * create table if not exists credit_transactions (
- *   id        uuid primary key default gen_random_uuid(),
- *   app_id    text not null,
- *   delta     integer not null,
- *   reason    text not null,
- *   endpoint  text,
- *   created_at timestamptz not null default now()
- * );
- *
- * create table if not exists promo_codes (
- *   id         uuid primary key default gen_random_uuid(),
- *   code       text unique not null,
- *   credits    integer not null,
- *   max_uses   integer not null default 1,
- *   uses       integer not null default 0,
- *   expires_at timestamptz,
- *   created_at timestamptz not null default now()
- * );
- * ─────────────────────────────────────────────────────
+ * Database schema: ui/supabase/migrations/001_credits_schema.sql
+ * Seed data:       ui/supabase/seed.sql
+ * Setup guide:     ui/README.md — "Database setup"
  */
 
 import { getSupabaseAdmin } from "./supabase"

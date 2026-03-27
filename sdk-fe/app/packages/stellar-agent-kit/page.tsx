@@ -2,7 +2,9 @@
 
 const QUICK_START = `import { StellarAgentKit, MAINNET_ASSETS } from "stellar-agent-kit";
 
-const agent = new StellarAgentKit(process.env.SECRET_KEY!, "mainnet");
+const secretKey = process.env.SECRET_KEY;
+if (!secretKey) throw new Error("SECRET_KEY is required. Set it in .env or .env.local.");
+const agent = new StellarAgentKit(secretKey, "mainnet");
 await agent.initialize();
 
 const balances = await agent.getBalances();

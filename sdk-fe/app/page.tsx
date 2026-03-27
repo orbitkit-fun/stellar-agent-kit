@@ -17,7 +17,9 @@ const NETWORKS = [
 const SNIPPETS = {
   "Agent Kit": `import { StellarAgentKit, MAINNET_ASSETS } from "stellar-agent-kit";
 
-const agent = new StellarAgentKit(process.env.SECRET_KEY!, "mainnet");
+const secretKey = process.env.SECRET_KEY;
+if (!secretKey) throw new Error("SECRET_KEY is required. Set it in .env or .env.local.");
+const agent = new StellarAgentKit(secretKey, "mainnet");
 await agent.initialize();
 
 const quote = await agent.dexGetQuote(
@@ -29,11 +31,13 @@ const result = await agent.dexSwap(quote);
 console.log(result.hash);`,
   "x402 Server": `import { x402 } from "x402-stellar-sdk/server";
 
+const destination = process.env.X402_DESTINATION;
+if (!destination) throw new Error("X402_DESTINATION is required. Set it in .env or .env.local.");
 const options = {
   price: "1",
   assetCode: "XLM",
   network: "testnet" as const,
-  destination: process.env.X402_DESTINATION!,
+  destination,
   memo: "premium",
 };
 app.use("/api/premium", x402(options));

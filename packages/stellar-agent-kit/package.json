@@ -21,7 +21,10 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "keywords": [
     "stellar",
@@ -41,8 +44,10 @@
     "zod": "^3.23.0"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^1.6.0",
     "tsup": "^8.5.0",
-    "typescript": "^5.3.0"
+    "typescript": "^5.3.0",
+    "vitest": "^1.6.0"
   },
   "engines": {
     "node": ">=18"
