@@ -3,7 +3,7 @@
  * Constructor(secretKey, network) + initialize() then protocol methods.
  */
 
-import { Keypair, Asset, TransactionBuilder, Operation, Networks, Horizon } from "@stellar/stellar-sdk";
+import { Keypair, Asset, TransactionBuilder, Operation, Networks, Horizon, BASE_FEE } from "@stellar/stellar-sdk";
 import { getNetworkConfig, type NetworkConfig } from "./config/networks.js";
 import { createDexClient, type DexAsset, type QuoteResult, type SwapResult } from "./dex/index.js";
 import { createReflectorOracle, type OracleAsset, type PriceData } from "./oracle/index.js";
@@ -94,8 +94,15 @@ export class StellarAgentKit {
     if (!this._horizon) throw new Error("Horizon not initialized");
     const id = accountId ?? this.keypair.publicKey();
     const account = await this._horizon.loadAccount(id);
-    return (account.balances as Array<{ asset_code: string; asset_issuer?: string; balance: string; limit?: string }>).map((b) => ({
-      assetCode: b.asset_code === "native" ? "XLM" : b.asset_code,
+    // BUG FIX: check asset_type, not asset_code, to identify native XLM
+    return (account.balances as Array<{
+      asset_type: string;
+      asset_code?: string;
+      asset_issuer?: string;
+      balance: string;
+      limit?: string;
+    }>).map((b) => ({
+      assetCode: b.asset_type === "native" ? "XLM" : (b.asset_code ?? "UNKNOWN"),
       issuer: b.asset_issuer,
       balance: b.balance,
       limit: b.limit,
@@ -114,7 +121,7 @@ export class StellarAgentKit {
     const networkPassphrase = Networks.PUBLIC;
     const sourceAccount = await this._horizon.loadAccount(this.keypair.publicKey());
     const tx = new TransactionBuilder(sourceAccount, {
-      fee: "100",
+      fee: String(BASE_FEE), // BUG FIX: was hardcoded "100"; use SDK BASE_FEE constant
       networkPassphrase,
     })
       .addOperation(Operation.createAccount({ destination, startingBalance }))
@@ -152,7 +159,7 @@ export class StellarAgentKit {
         : Asset.native();
 
     const tx = new TransactionBuilder(sourceAccount, {
-      fee: "100",
+      fee: String(BASE_FEE), // BUG FIX: was hardcoded "100"; use SDK BASE_FEE constant
       networkPassphrase,
     })
       .addOperation(Operation.payment({ destination: to, asset, amount }))
@@ -197,7 +204,7 @@ export class StellarAgentKit {
     const networkPassphrase = Networks.PUBLIC;
     const sourceAccount = await this._horizon.loadAccount(this.keypair.publicKey());
     const tx = new TransactionBuilder(sourceAccount, {
-      fee: "100",
+      fee: String(BASE_FEE), // BUG FIX: was hardcoded "100"; use SDK BASE_FEE constant
       networkPassphrase,
     })
       .addOperation(

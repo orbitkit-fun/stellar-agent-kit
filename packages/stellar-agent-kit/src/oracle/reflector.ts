@@ -95,14 +95,12 @@ function scValToI128(val: xdr.ScVal): string {
   if (!i128) throw new Error("Expected i128 price");
   const lo = i128.lo();
   const hi = i128.hi();
-  if (!lo || hi === undefined) return "0";
-  const loNum = Number(lo);
-  const hiNum = Number(hi);
-  const negative = hiNum < 0;
-  const absLo = loNum < 0 ? 0x100000000 + loNum : loNum;
-  const absHi = hiNum < 0 ? 0x100000000 + hiNum : hiNum;
-  let n = BigInt(absLo) + (BigInt(absHi) << 32n);
-  if (negative) n = -n;
+  if (lo == null || hi == null) return "0";
+  // BUG FIX: use BigInt(x.toString()) for exact u64/i64 conversion;
+  // shift by 64n (not 32n) — the correct width of the lo half.
+  const loBig = BigInt(lo.toString());
+  const hiBig = BigInt(hi.toString());
+  const n = loBig + (hiBig << 64n);
   return String(n);
 }
 
