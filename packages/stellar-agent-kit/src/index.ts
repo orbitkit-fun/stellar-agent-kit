@@ -32,3 +32,19 @@ export {
   type LendingResult,
 } from "./lending/index.js";
 export { FXDAO_MAINNET, ALLBRIDGE_CORE_STELLAR_DOCS } from "./config/protocols.js";
+export {
+  createPortfolioTracker,
+  formatPortfolioSummary,
+  formatTransactionHistory,
+  formatPaymentHistory,
+  formatPortfolioChanges,
+  type PortfolioTracker,
+  type PortfolioAsset,
+  type PortfolioSummary,
+  type TransactionRecord,
+  type PaymentRecord,
+  type TransactionHistoryOptions,
+  type PaymentHistoryOptions,
+  type PortfolioChange,
+  type PortfolioSnapshot,
+} from "./portfolio/index.js";

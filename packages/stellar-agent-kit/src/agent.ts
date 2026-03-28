@@ -8,6 +8,7 @@ import { getNetworkConfig, type NetworkConfig } from "./config/networks.js";
 import { createDexClient, type DexAsset, type QuoteResult, type SwapResult } from "./dex/index.js";
 import { createReflectorOracle, type OracleAsset, type PriceData } from "./oracle/index.js";
 import { lendingSupply as blendSupply, lendingBorrow as blendBorrow, type LendingSupplyArgs, type LendingBorrowArgs, type LendingResult } from "./lending/index.js";
+import { createPortfolioTracker, type PortfolioTracker, type PortfolioSummary, type TransactionRecord, type PaymentRecord, type TransactionHistoryOptions, type PaymentHistoryOptions, type PortfolioSnapshot, type PortfolioChange } from "./portfolio/index.js";
 
 /** This project is mainnet-only. */
 export type StellarNetwork = "mainnet";
@@ -20,6 +21,7 @@ export class StellarAgentKit {
   private _dex: ReturnType<typeof createDexClient> | null = null;
   private _horizon: Horizon.Server | null = null;
   private _oracle: ReturnType<typeof createReflectorOracle> | null = null;
+  private _portfolio: PortfolioTracker | null = null;
 
   constructor(secretKey: string, network: StellarNetwork = "mainnet") {
     if (network !== "mainnet") {
@@ -38,6 +40,7 @@ export class StellarAgentKit {
     this._horizon = new Horizon.Server(this.config.horizonUrl);
     this._dex = createDexClient(this.config, process.env.SOROSWAP_API_KEY);
     this._oracle = createReflectorOracle({ networkConfig: this.config });
+    this._portfolio = createPortfolioTracker(this.config);
     this._initialized = true;
     return this;
   }
@@ -245,5 +248,67 @@ export class StellarAgentKit {
   async lendingBorrow(args: LendingBorrowArgs): Promise<LendingResult> {
     this.ensureInitialized();
     return blendBorrow(this.config, this.keypair.secret(), args);
+  }
+
+  // ─── Portfolio & Transaction History ──────────────────────────────────────────
+
+  /**
+   * Get portfolio summary for an account.
+   * @param accountId - Stellar account ID (G...); defaults to this agent's public key
+   */
+  async getPortfolio(accountId?: string): Promise<PortfolioSummary> {
+    this.ensureInitialized();
+    if (!this._portfolio) throw new Error("Portfolio tracker not initialized");
+    return this._portfolio.getPortfolio(accountId ?? this.keypair.publicKey());
+  }
+
+  /**
+   * Get transaction history for an account.
+   * @param accountId - Stellar account ID (G...); defaults to this agent's public key
+   * @param options - Pagination and filtering options
+   */
+  async getTransactionHistory(
+    accountId?: string,
+    options?: TransactionHistoryOptions
+  ): Promise<TransactionRecord[]> {
+    this.ensureInitialized();
+    if (!this._portfolio) throw new Error("Portfolio tracker not initialized");
+    return this._portfolio.getTransactionHistory(accountId ?? this.keypair.publicKey(), options);
+  }
+
+  /**
+   * Get payment history for an account.
+   * @param accountId - Stellar account ID (G...); defaults to this agent's public key
+   * @param options - Pagination and filtering options
+   */
+  async getPaymentHistory(
+    accountId?: string,
+    options?: PaymentHistoryOptions
+  ): Promise<PaymentRecord[]> {
+    this.ensureInitialized();
+    if (!this._portfolio) throw new Error("Portfolio tracker not initialized");
+    return this._portfolio.getPaymentHistory(accountId ?? this.keypair.publicKey(), options);
+  }
+
+  /**
+   * Take a snapshot of current portfolio state (useful for tracking changes over time).
+   * @param accountId - Stellar account ID (G...); defaults to this agent's public key
+   */
+  async takePortfolioSnapshot(accountId?: string): Promise<PortfolioSnapshot> {
+    this.ensureInitialized();
+    if (!this._portfolio) throw new Error("Portfolio tracker not initialized");
+    return this._portfolio.takeSnapshot(accountId ?? this.keypair.publicKey());
+  }
+
+  /**
+   * Compare two portfolio snapshots to detect balance changes.
+   */
+  comparePortfolioSnapshots(
+    previous: PortfolioSnapshot,
+    current: PortfolioSnapshot
+  ): PortfolioChange[] {
+    this.ensureInitialized();
+    if (!this._portfolio) throw new Error("Portfolio tracker not initialized");
+    return this._portfolio.compareSnapshots(previous, current);
   }
 }
