@@ -1,8 +1,8 @@
 {
-  "name": "stellar-devkit-docs",
+  "name": "stellar-agent-kit-docs",
   "version": "1.0.0",
   "private": true,
-  "description": "Stellar DevKit dashboard and docs",
+  "description": "Stellar Agent Kit dashboard and docs",
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "cross-env NEXT_IGNORE_INCORRECT_LOCKFILE=1 next build",
