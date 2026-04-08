@@ -38,7 +38,7 @@ All “Open Orbit”, “Docs”, “Open Swap”, “DevKit”, etc. links poin
 
 ### 1. Vercel
 
-1. In [Vercel](https://vercel.com): **Add New Project** → **Import** your Git repo (e.g. `stellar-agent-kit`).
+1. In [Vercel](https://vercel.com): **Add New Project** → **Import** your Git repo (e.g. `stellar-devkit`).
 2. **Root Directory**: set to **`neos`** (so only the Neos app is built).
 3. **Framework Preset**: Next.js (auto-detected).
 4. Deploy. Note the default Vercel URL (e.g. `neos-xxx.vercel.app`).

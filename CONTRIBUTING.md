@@ -24,7 +24,7 @@ Thank you for your interest in contributing to Stellar DevKit. This document wal
 Stellar DevKit is a monorepo containing four published npm packages and a reference Next.js UI (Orbit).
 
 ```
-stellar-agent-kit/
+stellar-devkit/
 ├── packages/
 │   ├── stellar-agent-kit/        # Core TypeScript SDK (DEX, lending, oracles, payments)
 │   ├── stellar-devkit-mcp/       # MCP server for Cursor and Claude

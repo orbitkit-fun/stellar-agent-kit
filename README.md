@@ -1,4 +1,4 @@
-# Stellar Agent Kit
+# Stellar DevKit
 
 [![npm version](https://img.shields.io/npm/v/stellar-agent-kit.svg)](https://www.npmjs.com/package/stellar-agent-kit)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
