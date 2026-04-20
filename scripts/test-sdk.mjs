@@ -5,29 +5,36 @@
  * Requires SECRET_KEY (valid Stellar secret). Set SOROSWAP_API_KEY for quote test.
  * Use STELLAR_NETWORK=testnet to run on testnet.
  */
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, join } from "node:path";
 import { existsSync } from "node:fs";
-import "dotenv/config";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const distPath = join(__dirname, "..", "packages", "stellar-agent-kit", "dist", "index.js");
 
 if (!existsSync(distPath)) {
-  console.error("Error: packages/stellar-agent-kit/dist/index.js not found.");
-  console.error("Run from repo root: npm run build");
+  console.error("\n❌ Error: packages/stellar-agent-kit/dist/index.js not found.");
+  console.error("The SDK must be built before running this test script.");
+  console.error("\nRun the following command from the repository root:");
+  console.error("  npm run build\n");
   process.exit(1);
+}
+
+// Load environment variables
+try {
+  await import("dotenv/config");
+} catch (e) {
+  console.warn("Warning: Could not load dotenv/config. Ensure dependencies are installed.");
 }
 
 let StellarAgentKit, MAINNET_ASSETS, TESTNET_ASSETS;
 try {
-  const m = await import("../packages/stellar-agent-kit/dist/index.js");
+  const m = await import(pathToFileURL(distPath).href);
   StellarAgentKit = m.StellarAgentKit;
   MAINNET_ASSETS = m.MAINNET_ASSETS;
   TESTNET_ASSETS = m.TESTNET_ASSETS;
 } catch (e) {
-  console.error("Error loading stellar-agent-kit:", e.message);
-  console.error("Run from repo root: npm run build");
+  console.error("Error loading stellar-agent-kit from dist:", e.message);
   process.exit(1);
 }
 
