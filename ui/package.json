@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "next build",
+    "build": "npm run build:x402 && next build",
+    "build:x402": "npm run build -w packages/x402-stellar-sdk",
     "dev": "next dev",
     "lint": "eslint .",
     "start": "next start",
