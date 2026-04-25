@@ -217,6 +217,50 @@ export class StellarAgentKit {
     return { hash: result.hash };
   }
 
+  // ─── Trustlines ────────────────────────────────────────────────────────────
+
+  /**
+   * Create or modify a trustline for a custom asset.
+   * Required before an account can hold or receive non-native assets.
+   * @param assetCode - Asset code (e.g. "USDC")
+   * @param assetIssuer - Issuer account (G...)
+   * @param limit - Optional maximum balance to trust; defaults to max ("922337203685.4775807")
+   * @returns Transaction hash
+   */
+  async createTrustline(
+    assetCode: string,
+    assetIssuer: string,
+    limit?: string
+  ): Promise<{ hash: string }> {
+    this.ensureInitialized();
+    if (!this._horizon) throw new Error("Horizon not initialized");
+    const networkPassphrase =
+      this.network === "testnet" ? Networks.TESTNET : Networks.PUBLIC;
+    const asset = new Asset(assetCode, assetIssuer);
+    const sourceAccount = await this._horizon.loadAccount(this.keypair.publicKey());
+    const tx = new TransactionBuilder(sourceAccount, {
+      fee: "100",
+      networkPassphrase,
+    })
+      .addOperation(Operation.changeTrust({ asset, ...(limit !== undefined && { limit }) }))
+      .setTimeout(180)
+      .build();
+    tx.sign(this.keypair);
+    const result = await this._horizon.submitTransaction(tx);
+    return { hash: result.hash };
+  }
+
+  /**
+   * Remove a trustline for a custom asset (sets limit to "0").
+   * The account's balance for that asset must be zero before removal.
+   * @param assetCode - Asset code (e.g. "USDC")
+   * @param assetIssuer - Issuer account (G...)
+   * @returns Transaction hash
+   */
+  async removeTrustline(assetCode: string, assetIssuer: string): Promise<{ hash: string }> {
+    return this.createTrustline(assetCode, assetIssuer, "0");
+  }
+
   // ─── Oracle (Reflector SEP-40) ─────────────────────────────────────────────
 
   /**
