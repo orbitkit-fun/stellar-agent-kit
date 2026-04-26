@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, TrendingUp, TrendingDown, Info, CheckCircle, XCircle } from "lucide-react"
+import { Loader2, TrendingUp, TrendingDown, ArrowUpFromLine, RotateCcw, Info, CheckCircle, XCircle } from "lucide-react"
 import { useAccount } from "@/hooks/use-account"
 import { useBalance } from "@/hooks/use-balance"
 import { useNetworkProfile } from "@/contexts/network-profile-context"
@@ -52,7 +52,7 @@ interface SupplyBorrowState {
 }
 
 // Helper function to parse Blend error messages
-function parseBlendError(errorMessage: string, operation: 'supply' | 'borrow' = 'supply'): string {
+function parseBlendError(errorMessage: string, operation: 'supply' | 'borrow' | 'withdraw' | 'repay' = 'supply'): string {
   if (errorMessage.includes("#1206")) {
     if (operation === 'supply') {
       return "Invalid pool status. The Blend pool may be frozen or in a restricted state—supply is not allowed right now. Check pool status at blend.capital or try again later."
@@ -96,6 +96,18 @@ export function BlendInterface() {
     error: null,
   })
   const [borrowState, setBorrowState] = useState<SupplyBorrowState>({
+    asset: BLEND_ASSETS[0],
+    amount: "",
+    isLoading: false,
+    error: null,
+  })
+  const [withdrawState, setWithdrawState] = useState<SupplyBorrowState>({
+    asset: BLEND_ASSETS[0],
+    amount: "",
+    isLoading: false,
+    error: null,
+  })
+  const [repayState, setRepayState] = useState<SupplyBorrowState>({
     asset: BLEND_ASSETS[0],
     amount: "",
     isLoading: false,
@@ -196,6 +208,142 @@ export function BlendInterface() {
       setSupplyState(prev => ({
         ...prev,
         error: parseBlendError(errorMessage, 'supply'),
+        isLoading: false,
+      }))
+    }
+  }
+
+  const handleWithdraw = async () => {
+    if (!isConnected || !publicKey || !withdrawState.asset || !withdrawState.amount) {
+      setWithdrawState(prev => ({ ...prev, error: "Please connect wallet and fill all fields" }))
+      return
+    }
+    if (hasNetworkMismatch) {
+      setShowNetworkMismatch(true)
+      return
+    }
+    setWithdrawState(prev => ({ ...prev, isLoading: true, error: null }))
+    try {
+      const response = await fetch("/api/lending/withdraw", {
+        method: "POST",
+        headers: demoApiHeaders(),
+        body: JSON.stringify({
+          publicKey,
+          asset: withdrawState.asset!.contractId,
+          amount: withdrawState.amount,
+          network: account ? normalizeNetwork(account.network) : "mainnet",
+          poolId,
+        }),
+      })
+      if (!response.ok) {
+        const error = await response.text()
+        throw new Error(error || "Failed to build withdraw transaction")
+      }
+      const { xdr } = await response.json()
+      const networkPassphrase = "Public Global Stellar Network ; September 2015"
+      const signedXdr = await signTransaction(xdr, { networkPassphrase })
+      const network = account ? normalizeNetwork(account.network) : "mainnet"
+      const submitResponse = await fetch("/api/lending/submit", {
+        method: "POST",
+        headers: demoApiHeaders(),
+        body: JSON.stringify({ signedXdr, network }),
+      })
+      if (!submitResponse.ok) {
+        const body = await submitResponse.text()
+        let message = "Failed to submit transaction"
+        try {
+          const parsed = JSON.parse(body)
+          if (typeof parsed?.error === "string") message = parsed.error
+        } catch {
+          if (body) message = body
+        }
+        throw new Error(message)
+      }
+      const { hash } = await submitResponse.json()
+      setTransactions(prev => [{
+        id: Date.now().toString(),
+        type: "withdraw",
+        asset: withdrawState.asset!.symbol,
+        amount: withdrawState.amount,
+        status: "success",
+        hash,
+        timestamp: Date.now(),
+      }, ...prev])
+      setWithdrawState(prev => ({ ...prev, amount: "", isLoading: false }))
+    } catch (error) {
+      console.error("Withdraw error:", error)
+      const errorMessage = error instanceof Error ? error.message : "Withdraw failed"
+      setWithdrawState(prev => ({
+        ...prev,
+        error: parseBlendError(errorMessage, 'withdraw'),
+        isLoading: false,
+      }))
+    }
+  }
+
+  const handleRepay = async () => {
+    if (!isConnected || !publicKey || !repayState.asset || !repayState.amount) {
+      setRepayState(prev => ({ ...prev, error: "Please connect wallet and fill all fields" }))
+      return
+    }
+    if (hasNetworkMismatch) {
+      setShowNetworkMismatch(true)
+      return
+    }
+    setRepayState(prev => ({ ...prev, isLoading: true, error: null }))
+    try {
+      const response = await fetch("/api/lending/repay", {
+        method: "POST",
+        headers: demoApiHeaders(),
+        body: JSON.stringify({
+          publicKey,
+          asset: repayState.asset!.contractId,
+          amount: repayState.amount,
+          network: account ? normalizeNetwork(account.network) : "mainnet",
+          poolId,
+        }),
+      })
+      if (!response.ok) {
+        const error = await response.text()
+        throw new Error(error || "Failed to build repay transaction")
+      }
+      const { xdr } = await response.json()
+      const networkPassphrase = "Public Global Stellar Network ; September 2015"
+      const signedXdr = await signTransaction(xdr, { networkPassphrase })
+      const network = account ? normalizeNetwork(account.network) : "mainnet"
+      const submitResponse = await fetch("/api/lending/submit", {
+        method: "POST",
+        headers: demoApiHeaders(),
+        body: JSON.stringify({ signedXdr, network }),
+      })
+      if (!submitResponse.ok) {
+        const body = await submitResponse.text()
+        let message = "Failed to submit transaction"
+        try {
+          const parsed = JSON.parse(body)
+          if (typeof parsed?.error === "string") message = parsed.error
+        } catch {
+          if (body) message = body
+        }
+        throw new Error(message)
+      }
+      const { hash } = await submitResponse.json()
+      setTransactions(prev => [{
+        id: Date.now().toString(),
+        type: "repay",
+        asset: repayState.asset!.symbol,
+        amount: repayState.amount,
+        status: "success",
+        hash,
+        timestamp: Date.now(),
+      }, ...prev])
+      setRepayState(prev => ({ ...prev, amount: "", isLoading: false }))
+    } catch (error) {
+      console.error("Repay error:", error)
+      const errorMessage = error instanceof Error ? error.message : "Repay failed"
+      setRepayState(prev => ({
+        ...prev,
+        error: parseBlendError(errorMessage, 'repay'),
         isLoading: false,
       }))
     }
@@ -423,23 +571,37 @@ export function BlendInterface() {
       )}
 
       <Tabs defaultValue="supply" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-6 bg-zinc-900 border border-zinc-700">
-          <TabsTrigger 
-            value="supply" 
+        <TabsList className="grid w-full grid-cols-4 mb-6 bg-zinc-900 border border-zinc-700">
+          <TabsTrigger
+            value="supply"
             className="data-[state=active]:bg-zinc-700 data-[state=active]:text-white"
           >
             <TrendingUp className="h-4 w-4 mr-2" />
             Supply
           </TabsTrigger>
-          <TabsTrigger 
-            value="borrow" 
+          <TabsTrigger
+            value="borrow"
             className={`data-[state=active]:bg-zinc-700 data-[state=active]:text-white ${
               !hasSuppliedAssets ? "opacity-60" : ""
             }`}
             title={!hasSuppliedAssets ? "Supply collateral first to enable borrowing" : ""}
           >
             <TrendingDown className="h-4 w-4 mr-2" />
-            Borrow {!hasSuppliedAssets && "(Supply First)"}
+            Borrow
+          </TabsTrigger>
+          <TabsTrigger
+            value="withdraw"
+            className="data-[state=active]:bg-zinc-700 data-[state=active]:text-white"
+          >
+            <ArrowUpFromLine className="h-4 w-4 mr-2" />
+            Withdraw
+          </TabsTrigger>
+          <TabsTrigger
+            value="repay"
+            className="data-[state=active]:bg-zinc-700 data-[state=active]:text-white"
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Repay
           </TabsTrigger>
         </TabsList>
 
@@ -619,6 +781,164 @@ export function BlendInterface() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="withdraw" className="space-y-4">
+          <Alert className="mb-4">
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              Withdraw your supplied collateral from the pool. Make sure your health factor stays above 1 after withdrawal.
+            </AlertDescription>
+          </Alert>
+          <Card className="bg-zinc-900/50 border-zinc-700">
+            <CardHeader>
+              <CardTitle className="text-white">Withdraw Collateral</CardTitle>
+              <CardDescription>Remove previously supplied assets from the pool</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="withdraw-asset" className="text-white">Asset</Label>
+                <Select
+                  value={withdrawState.asset?.symbol || ""}
+                  onValueChange={(value) => {
+                    const asset = BLEND_ASSETS.find(a => a.symbol === value)
+                    setWithdrawState(prev => ({ ...prev, asset: asset || null, error: null }))
+                  }}
+                >
+                  <SelectTrigger className="bg-zinc-800 border-zinc-600 text-white">
+                    <SelectValue placeholder="Select asset" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-600">
+                    {BLEND_ASSETS.map((asset) => (
+                      <SelectItem key={asset.symbol} value={asset.symbol} className="text-white hover:bg-zinc-700">
+                        <div className="flex items-center gap-2">
+                          <span>{asset.symbol}</span>
+                          <span className="text-zinc-400">({asset.name})</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="withdraw-amount" className="text-white">Amount</Label>
+                <div className="relative">
+                  <Input
+                    id="withdraw-amount"
+                    type="number"
+                    placeholder="0.00"
+                    value={withdrawState.amount}
+                    onChange={(e) => setWithdrawState(prev => ({ ...prev, amount: e.target.value, error: null }))}
+                    className="bg-zinc-800 border-zinc-600 text-white pr-16"
+                  />
+                  {withdrawState.asset && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-zinc-400">
+                      {withdrawState.asset.symbol}
+                    </div>
+                  )}
+                </div>
+              </div>
+              {withdrawState.error && (
+                <Alert variant="destructive">
+                  <XCircle className="h-4 w-4" />
+                  <AlertDescription>{withdrawState.error}</AlertDescription>
+                </Alert>
+              )}
+              <Button
+                onClick={handleWithdraw}
+                disabled={withdrawState.isLoading || !withdrawState.asset || !withdrawState.amount}
+                className="w-full bg-[#a78bfa] hover:bg-[#9333ea] text-white"
+              >
+                {withdrawState.isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Withdrawing...
+                  </>
+                ) : (
+                  "Withdraw Asset"
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="repay" className="space-y-4">
+          <Alert className="mb-4">
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              Repay your outstanding loan to reduce debt and improve your health factor.
+            </AlertDescription>
+          </Alert>
+          <Card className="bg-zinc-900/50 border-zinc-700">
+            <CardHeader>
+              <CardTitle className="text-white">Repay Loan</CardTitle>
+              <CardDescription>Pay back borrowed assets to the pool</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="repay-asset" className="text-white">Asset</Label>
+                <Select
+                  value={repayState.asset?.symbol || ""}
+                  onValueChange={(value) => {
+                    const asset = BLEND_ASSETS.find(a => a.symbol === value)
+                    setRepayState(prev => ({ ...prev, asset: asset || null, error: null }))
+                  }}
+                >
+                  <SelectTrigger className="bg-zinc-800 border-zinc-600 text-white">
+                    <SelectValue placeholder="Select asset" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-600">
+                    {BLEND_ASSETS.map((asset) => (
+                      <SelectItem key={asset.symbol} value={asset.symbol} className="text-white hover:bg-zinc-700">
+                        <div className="flex items-center gap-2">
+                          <span>{asset.symbol}</span>
+                          <span className="text-zinc-400">({asset.name})</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="repay-amount" className="text-white">Amount</Label>
+                <div className="relative">
+                  <Input
+                    id="repay-amount"
+                    type="number"
+                    placeholder="0.00"
+                    value={repayState.amount}
+                    onChange={(e) => setRepayState(prev => ({ ...prev, amount: e.target.value, error: null }))}
+                    className="bg-zinc-800 border-zinc-600 text-white pr-16"
+                  />
+                  {repayState.asset && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-zinc-400">
+                      {repayState.asset.symbol}
+                    </div>
+                  )}
+                </div>
+              </div>
+              {repayState.error && (
+                <Alert variant="destructive">
+                  <XCircle className="h-4 w-4" />
+                  <AlertDescription>{repayState.error}</AlertDescription>
+                </Alert>
+              )}
+              <Button
+                onClick={handleRepay}
+                disabled={repayState.isLoading || !repayState.asset || !repayState.amount}
+                className="w-full bg-[#a78bfa] hover:bg-[#9333ea] text-white"
+              >
+                {repayState.isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Repaying...
+                  </>
+                ) : (
+                  "Repay Loan"
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Transaction History */}
@@ -641,7 +961,7 @@ export function BlendInterface() {
                     )}
                     <div>
                       <p className="text-white text-sm font-medium">
-                        {tx.type === "supply" ? "Supplied" : "Borrowed"} {tx.amount} {tx.asset}
+                        {tx.type === "supply" ? "Supplied" : tx.type === "borrow" ? "Borrowed" : tx.type === "withdraw" ? "Withdrew" : "Repaid"} {tx.amount} {tx.asset}
                       </p>
                       <p className="text-zinc-400 text-xs">
                         {new Date(tx.timestamp).toLocaleString()}

@@ -36,6 +36,18 @@ export interface LendingBorrowArgs {
   amount: string;
 }
 
+export interface LendingWithdrawArgs {
+  poolId: string;
+  assetContractId: string;
+  amount: string;
+}
+
+export interface LendingRepayArgs {
+  poolId: string;
+  assetContractId: string;
+  amount: string;
+}
+
 export interface LendingResult {
   hash: string;
   status: string;
@@ -137,6 +149,74 @@ export async function lendingBorrow(
   const sendResult = await server.sendTransaction(prepared);
   if (sendResult.errorResult) {
     throw new Error(`Blend borrow failed: ${String(sendResult.errorResult)}`);
+  }
+  return { hash: sendResult.hash, status: sendResult.status ?? "PENDING" };
+}
+
+/**
+ * Withdraw (remove) collateral from a Blend pool.
+ */
+export async function lendingWithdraw(
+  networkConfig: NetworkConfig,
+  secretKey: string,
+  args: LendingWithdrawArgs
+): Promise<LendingResult> {
+  const amountBigInt = BigInt(args.amount);
+  const requests: Request[] = [
+    {
+      request_type: RequestType.WithdrawCollateral,
+      address: args.assetContractId,
+      amount: amountBigInt,
+    },
+  ];
+  const { tx, keypair } = await buildSubmitTx(
+    networkConfig,
+    secretKey,
+    args.poolId,
+    requests
+  );
+  const server = new rpc.Server(networkConfig.sorobanRpcUrl, {
+    allowHttp: networkConfig.sorobanRpcUrl.startsWith("http:"),
+  });
+  const prepared = await server.prepareTransaction(tx);
+  prepared.sign(keypair);
+  const sendResult = await server.sendTransaction(prepared);
+  if (sendResult.errorResult) {
+    throw new Error(`Blend withdraw failed: ${String(sendResult.errorResult)}`);
+  }
+  return { hash: sendResult.hash, status: sendResult.status ?? "PENDING" };
+}
+
+/**
+ * Repay a borrowed asset to a Blend pool.
+ */
+export async function lendingRepay(
+  networkConfig: NetworkConfig,
+  secretKey: string,
+  args: LendingRepayArgs
+): Promise<LendingResult> {
+  const amountBigInt = BigInt(args.amount);
+  const requests: Request[] = [
+    {
+      request_type: RequestType.Repay,
+      address: args.assetContractId,
+      amount: amountBigInt,
+    },
+  ];
+  const { tx, keypair } = await buildSubmitTx(
+    networkConfig,
+    secretKey,
+    args.poolId,
+    requests
+  );
+  const server = new rpc.Server(networkConfig.sorobanRpcUrl, {
+    allowHttp: networkConfig.sorobanRpcUrl.startsWith("http:"),
+  });
+  const prepared = await server.prepareTransaction(tx);
+  prepared.sign(keypair);
+  const sendResult = await server.sendTransaction(prepared);
+  if (sendResult.errorResult) {
+    throw new Error(`Blend repay failed: ${String(sendResult.errorResult)}`);
   }
   return { hash: sendResult.hash, status: sendResult.status ?? "PENDING" };
 }

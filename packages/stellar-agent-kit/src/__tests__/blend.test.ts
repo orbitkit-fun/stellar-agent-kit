@@ -1,9 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { lendingSupply, lendingBorrow, BLEND_POOLS_MAINNET, BLEND_POOLS } from "../lending/blend.js";
+import { lendingSupply, lendingBorrow, lendingWithdraw, lendingRepay, BLEND_POOLS_MAINNET, BLEND_POOLS } from "../lending/blend.js";
 import type { NetworkConfig } from "../config/networks.js";
 
 const mockNetworkConfig: NetworkConfig = {
-  network: "mainnet",
   horizonUrl: "https://horizon.stellar.org",
   sorobanRpcUrl: "https://soroban-rpc.stellar.org",
 };
@@ -98,6 +97,58 @@ describe("lendingBorrow", () => {
         poolId: BLEND_POOLS_MAINNET,
         assetContractId: USDC_CONTRACT,
         amount: "NaN",
+      })
+    ).rejects.toThrow();
+  });
+});
+
+describe("lendingWithdraw", () => {
+  it("is a function", () => {
+    expect(typeof lendingWithdraw).toBe("function");
+  });
+
+  it("throws when amount is not a valid BigInt string", async () => {
+    await expect(
+      lendingWithdraw(mockNetworkConfig, FAKE_SECRET, {
+        poolId: BLEND_POOLS_MAINNET,
+        assetContractId: USDC_CONTRACT,
+        amount: "not_a_number",
+      })
+    ).rejects.toThrow();
+  });
+
+  it("throws when poolId is empty", async () => {
+    await expect(
+      lendingWithdraw(mockNetworkConfig, FAKE_SECRET, {
+        poolId: "",
+        assetContractId: USDC_CONTRACT,
+        amount: "1000000",
+      })
+    ).rejects.toThrow();
+  });
+});
+
+describe("lendingRepay", () => {
+  it("is a function", () => {
+    expect(typeof lendingRepay).toBe("function");
+  });
+
+  it("throws when amount is not a valid BigInt string", async () => {
+    await expect(
+      lendingRepay(mockNetworkConfig, FAKE_SECRET, {
+        poolId: BLEND_POOLS_MAINNET,
+        assetContractId: USDC_CONTRACT,
+        amount: "not_a_number",
+      })
+    ).rejects.toThrow();
+  });
+
+  it("throws when poolId is empty", async () => {
+    await expect(
+      lendingRepay(mockNetworkConfig, FAKE_SECRET, {
+        poolId: "",
+        assetContractId: USDC_CONTRACT,
+        amount: "1000000",
       })
     ).rejects.toThrow();
   });

@@ -7,7 +7,7 @@ import { Keypair, Asset, TransactionBuilder, Operation, Networks, Horizon } from
 import { getNetworkConfig, type NetworkConfig } from "./config/networks.js";
 import { createDexClient, type DexAsset, type QuoteResult, type SwapResult } from "./dex/index.js";
 import { createReflectorOracle, type OracleAsset, type PriceData } from "./oracle/index.js";
-import { lendingSupply as blendSupply, lendingBorrow as blendBorrow, type LendingSupplyArgs, type LendingBorrowArgs, type LendingResult } from "./lending/index.js";
+import { lendingSupply as blendSupply, lendingBorrow as blendBorrow, lendingWithdraw as blendWithdraw, lendingRepay as blendRepay, type LendingSupplyArgs, type LendingBorrowArgs, type LendingWithdrawArgs, type LendingRepayArgs, type LendingResult } from "./lending/index.js";
 
 /** This project is mainnet-only. */
 export type StellarNetwork = "mainnet" | "testnet";
@@ -245,5 +245,21 @@ export class StellarAgentKit {
   async lendingBorrow(args: LendingBorrowArgs): Promise<LendingResult> {
     this.ensureInitialized();
     return blendBorrow(this.config, this.keypair.secret(), args);
+  }
+
+  /**
+   * Withdraw collateral from a Blend pool.
+   */
+  async lendingWithdraw(args: LendingWithdrawArgs): Promise<LendingResult> {
+    this.ensureInitialized();
+    return blendWithdraw(this.config, this.keypair.secret(), args);
+  }
+
+  /**
+   * Repay a borrowed asset to a Blend pool.
+   */
+  async lendingRepay(args: LendingRepayArgs): Promise<LendingResult> {
+    this.ensureInitialized();
+    return blendRepay(this.config, this.keypair.secret(), args);
   }
 }
