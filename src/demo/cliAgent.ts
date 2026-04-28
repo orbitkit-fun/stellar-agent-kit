@@ -227,20 +227,32 @@ async function executeAgentTools(
   return executeAgentTools(openai, model, current, msg, debug);
 }
 
+/** Validate required environment variables and CLI options. */
+function validateAgentConfig(options: { apiKey?: string; debug?: boolean }): { apiKey: string; debug: boolean } {
+  const apiKey = options.apiKey ?? process.env.GROQ_API_KEY;
+  const debug = Boolean(options.debug) || process.env.STELLAR_AGENT_KIT_DEBUG === "1";
+
+  if (!apiKey) {
+    console.error("❌ Error: GROQ API key is required for the agent command.\n");
+    console.error("Please provide it in one of these ways:\n");
+    console.error("  1. Set environment variable:     export GROQ_API_KEY=your_key_here");
+    console.error("  2. Pass as CLI argument:         stellar-defi-agent-kit agent --api-key your_key_here\n");
+    console.error("Get a free API key at: https://console.groq.com/keys\n");
+    process.exit(1);
+  }
+
+  return { apiKey, debug };
+}
+
 /** Register the `agent` command on the Commander program. */
 export function registerAgentCommand(program: Command): void {
   program
     .command("agent")
     .description("Chat with Stellar DeFi agent (balance, swap quotes)")
-    .option("--api-key <key>", "Groq API key (or set GROQ_API_KEY)")
+    .option("--api-key <key>", "Groq API key (or set GROQ_API_KEY env var)")
     .option("--debug", "Enable debug logging (secrets redacted)")
     .action(async (options: { apiKey?: string; debug?: boolean }) => {
-      const apiKey = options.apiKey ?? process.env.GROQ_API_KEY;
-      if (!apiKey) {
-        console.error("Error: Set GROQ_API_KEY or pass --api-key <key>");
-        process.exit(1);
-      }
-      const debug = Boolean(options.debug) || process.env.STELLAR_AGENT_KIT_DEBUG === "1";
+      const { apiKey, debug } = validateAgentConfig(options);
 
       const { default: OpenAI } = await import("openai");
       const openai = new OpenAI({
