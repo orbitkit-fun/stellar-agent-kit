@@ -173,7 +173,7 @@ async function runOneTool(name: string, args: Record<string, unknown>, debug: bo
   try {
     const result = await tool.execute(args as never);
     return JSON.stringify(result);
-  } catch (err) {
+  } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     return JSON.stringify({ error: message });
   }
@@ -200,7 +200,7 @@ async function executeAgentTools(
     let args: Record<string, unknown> = {};
     try {
       args = JSON.parse(tc.function.arguments) as Record<string, unknown>;
-    } catch {
+    } catch (_err: unknown) {
       args = {};
     }
     const result = await runOneTool(tc.function.name, args, debug);
@@ -280,7 +280,7 @@ export function registerAgentCommand(program: Command): void {
           console.log("Agent:", final);
 
           history.push({ role: "assistant", content: final });
-        } catch (err) {
+        } catch (err: unknown) {
           const message = err instanceof Error ? err.message : String(err);
           console.error("Agent error:", message);
         }

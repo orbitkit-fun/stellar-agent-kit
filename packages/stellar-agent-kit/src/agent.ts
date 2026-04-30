@@ -3,7 +3,7 @@
  * Constructor(secretKey, network) + initialize() then protocol methods.
  */
 
-import { Keypair, Asset, TransactionBuilder, Operation, Networks, Horizon } from "@stellar/stellar-sdk";
+import { Keypair, Asset, TransactionBuilder, Operation, Networks, Server as HorizonServer } from "@stellar/stellar-sdk";
 import { getNetworkConfig, type NetworkConfig } from "./config/networks.js";
 import { createDexClient, type DexAsset, type QuoteResult, type SwapResult } from "./dex/index.js";
 import { createReflectorOracle, type OracleAsset, type PriceData } from "./oracle/index.js";
@@ -18,7 +18,7 @@ export class StellarAgentKit {
   public readonly config: NetworkConfig;
   private _initialized = false;
   private _dex: ReturnType<typeof createDexClient> | null = null;
-  private _horizon: Horizon.Server | null = null;
+  private _horizon: HorizonServer | null = null;
   private _oracle: ReturnType<typeof createReflectorOracle> | null = null;
 
   constructor(secretKey: string, network: StellarNetwork = "mainnet") {
@@ -32,7 +32,7 @@ export class StellarAgentKit {
    * Call after construction before using protocol methods.
    */
   async initialize(): Promise<this> {
-    this._horizon = new Horizon.Server(this.config.horizonUrl);
+    this._horizon = new HorizonServer(this.config.horizonUrl);
     this._dex = createDexClient(this.config, process.env.SOROSWAP_API_KEY);
     this._oracle = createReflectorOracle({ networkConfig: this.config });
     this._initialized = true;
@@ -91,7 +91,8 @@ export class StellarAgentKit {
     if (!this._horizon) throw new Error("Horizon not initialized");
     const id = accountId ?? this.keypair.publicKey();
     const account = await this._horizon.loadAccount(id);
-    return (account.balances as Array<{ asset_code: string; asset_issuer?: string; balance: string; limit?: string }>).map((b) => ({
+    const balances = account.balances as Array<{ asset_code: string; asset_issuer?: string; balance: string; limit?: string }>;
+    return balances.map((b: { asset_code: string; asset_issuer?: string; balance: string; limit?: string }) => ({
       assetCode: b.asset_code === "native" ? "XLM" : b.asset_code,
       issuer: b.asset_issuer,
       balance: b.balance,
@@ -185,13 +186,13 @@ export class StellarAgentKit {
     const send =
       sendAsset.assetCode === "XLM" && !sendAsset.issuer
         ? Asset.native()
-        : new Asset(sendAsset.assetCode, sendAsset.issuer!);
+        : new Asset(sendAsset.assetCode, sendAsset.issuer || "");
     const dest =
       destAsset.assetCode === "XLM" && !destAsset.issuer
         ? Asset.native()
-        : new Asset(destAsset.assetCode, destAsset.issuer!);
+        : new Asset(destAsset.assetCode, destAsset.issuer || "");
     const pathAssets = path.map((p) =>
-      p.assetCode === "XLM" && !p.issuer ? Asset.native() : new Asset(p.assetCode, p.issuer!)
+      p.assetCode === "XLM" && !p.issuer ? Asset.native() : new Asset(p.assetCode, p.issuer || "")
     );
     const networkPassphrase =
       this.network === "testnet" ? Networks.TESTNET : Networks.PUBLIC;
