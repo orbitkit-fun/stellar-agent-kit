@@ -148,25 +148,6 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         required: ["fromAsset", "toAsset", "amount"],
       },
     },
-    {
-      name: "get_account_balance",
-      description: "Get the balance of a Stellar account including XLM and all token balances. Takes a public key and returns a formatted balance summary.",
-      inputSchema: {
-        type: "object",
-        properties: {
-          publicKey: {
-            type: "string",
-            description: "Stellar public key (G...)",
-          },
-          network: {
-            type: "string",
-            enum: ["mainnet", "testnet"],
-            description: "Network (mainnet default)",
-          },
-        },
-        required: ["publicKey"],
-      },
-    },
   ],
 }));
 
@@ -209,6 +190,8 @@ const quote = await agent.dexGetQuote(
 );
 const result = await agent.dexSwap(quote);`,
       quote: `import { StellarAgentKit, MAINNET_ASSETS } from "stellar-agent-kit";
+const secretKey = process.env.SECRET_KEY;
+if (!secretKey) throw new Error("SECRET_KEY is required.");
 const agent = new StellarAgentKit(secretKey, "mainnet");
 await agent.initialize();
 const quote = await agent.dexGetQuote(
@@ -488,66 +471,6 @@ const res = await x402Fetch(url, undefined, {
       return {
         content: [{ type: "text", text: `❌ Swap failed: ${message}.${hint}` }],
       };
-    }
-  }
-  if (name === "get_account_balance") {
-    const publicKey = (args?.publicKey as string)?.trim();
-    const network = ((args?.network as string) || "mainnet").toLowerCase();
-
-    if (!publicKey) {
-      return { content: [{ type: "text", text: "Public key is required." }] };
-    }
-
-    // Basic validation for Stellar public key format
-    if (!publicKey.startsWith("G") || publicKey.length !== 56) {
-      return { content: [{ type: "text", text: "Invalid Stellar public key format. Public keys start with 'G' and are 56 characters long." }] };
-    }
-
-    try {
-      const config = getNetworkConfig(network as "mainnet" | "testnet");
-      const horizonUrl = config.horizonUrl;
-      
-      const response = await fetch(`${horizonUrl}/accounts/${publicKey}`);
-      
-      if (!response.ok) {
-        if (response.status === 404) {
-          return { content: [{ type: "text", text: `Account ${publicKey} not found on ${network}.` }] };
-        }
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const account = await response.json();
-      
-      // Format balances
-      const balances = account.balances.map((balance: any) => {
-        if (balance.asset_type === "native") {
-          return `XLM: ${parseFloat(balance.balance).toFixed(7)}`;
-        } else {
-          const assetCode = balance.asset_code || "Unknown";
-          const issuer = balance.asset_issuer ? ` (${balance.asset_issuer.substring(0, 8)}...)` : "";
-          return `${assetCode}${issuer}: ${parseFloat(balance.balance).toFixed(7)}`;
-        }
-      });
-
-      const text = [
-        `Account Balance Summary`,
-        `========================`,
-        `Public Key: ${publicKey}`,
-        `Network: ${network}`,
-        `Sequence: ${account.sequence}`,
-        ``,
-        `Balances:`,
-        ...balances.map((b: string) => `  ${b}`),
-        ``,
-        `Total Subentries: ${account.subentry_count}`,
-        `Last Modified: ${new Date(account.last_modified_time).toLocaleString()}`,
-      ].join("\n");
-
-      return { content: [{ type: "text", text }] };
-
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      return { content: [{ type: "text", text: `Failed to fetch account balance: ${message}` }] };
     }
   }
 
