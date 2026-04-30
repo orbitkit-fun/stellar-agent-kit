@@ -148,6 +148,31 @@ function toOpenAITools(): ChatCompletionTool[] {
         },
       },
     },
+    {
+      type: "function",
+      function: {
+        name: "get_account_summary",
+        description:
+          "Fetch recent operations history for a Stellar account. " +
+          "Returns payments, trust-line changes, offers, merges, claimable balances and more.",
+        parameters: {
+          type: "object",
+          properties: {
+            address: { type: "string", description: "Stellar public key (G...)" },
+            limit: {
+              type: "number",
+              description: "Number of recent operations (1-50, default 10)",
+            },
+            network: {
+              type: "string",
+              enum: ["mainnet", "testnet"],
+              description: "Network to query (default mainnet)",
+            },
+          },
+          required: ["address"],
+        },
+      },
+    },
   ];
 }
 

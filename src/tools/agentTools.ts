@@ -6,6 +6,7 @@ import {
   type QuoteResponse,
   type Asset,
 } from "../defi/index.js";
+import { getAccountSummaryTool } from "./accountSummaryTool.js";
 
 const MAINNET_ASSETS = {
   XLM: "CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA",
@@ -386,4 +387,5 @@ export const tools = [
       }
     },
   },
+  getAccountSummaryTool,
 ];

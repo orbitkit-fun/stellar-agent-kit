@@ -1,5 +1,5 @@
 /**
- * Network config – mainnet only.
+ * Network config – mainnet & testnet.
  */
 
 export const mainnet = {
@@ -7,10 +7,19 @@ export const mainnet = {
   sorobanRpcUrl: "https://soroban-rpc.mainnet.stellar.gateway.fm",
 } as const;
 
-export type NetworkConfig = typeof mainnet;
+export const testnet = {
+  horizonUrl: "https://horizon-testnet.stellar.org",
+  sorobanRpcUrl: "https://soroban-testnet.stellar.org",
+} as const;
 
-export type NetworkName = "mainnet";
+export interface NetworkConfig {
+  readonly horizonUrl: string;
+  readonly sorobanRpcUrl: string;
+}
+
+export type NetworkName = "mainnet" | "testnet";
 
 export function getNetworkConfig(_name?: string): NetworkConfig {
+  if (_name === "testnet") return testnet;
   return mainnet;
 }
