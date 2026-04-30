@@ -87,6 +87,35 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
       },
     },
     {
+      name: "get_account_balance",
+      description:
+        "Get the on-chain balance for a Stellar account. Returns native XLM balance plus " +
+        "all trustline (credit asset) balances with issuer and limit. Use when the user asks " +
+        "'what's the balance of G...', 'does account X hold USDC', or wants to inspect holdings " +
+        "before a swap or send. Reads directly from Horizon — no API key or secret required.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          accountId: {
+            type: "string",
+            description: "Stellar public key (starts with G, 56 chars)",
+          },
+          network: {
+            type: "string",
+            enum: ["mainnet", "testnet"],
+            description: "Network to query (default: mainnet)",
+          },
+          assetCode: {
+            type: "string",
+            description:
+              "Optional — filter to a single asset code (e.g. 'XLM', 'USDC'). " +
+              "If omitted, returns all balances.",
+          },
+        },
+        required: ["accountId"],
+      },
+    },
+    {
       name: "execute_swap",
       description:
         "Execute an actual token swap on Stellar mainnet via SoroSwap. " +
@@ -217,6 +246,10 @@ const res = await x402Fetch(url, undefined, {
   if (name === "list_devkit_methods") {
     const text = `# Stellar DevKit – public APIs
 
+## MCP tools (this server)
+- get_account_balance(accountId, network?, assetCode?) – on-chain balance via Horizon
+- get_quote, execute_swap, get_stellar_contract, get_sdk_snippet, list_devkit_methods
+
 ## stellar-agent-kit (StellarAgentKit)
 - initialize() – call once after construction
 - getBalances(accountId?) – native + trustline balances
@@ -273,6 +306,101 @@ const res = await x402Fetch(url, undefined, {
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       return { content: [{ type: "text", text: `Quote failed: ${message}` }] };
+    }
+  }
+  if (name === "get_account_balance") {
+    const accountId = ((args?.accountId as string) ?? "").trim();
+    const network = (((args?.network as string) ?? "mainnet").toLowerCase()) as "mainnet" | "testnet";
+    const filterAssetCode = ((args?.assetCode as string) ?? "").trim().toUpperCase();
+
+    if (!/^G[A-Z2-7]{55}$/.test(accountId)) {
+      return {
+        content: [{
+          type: "text",
+          text:
+            `Invalid accountId: "${accountId}". Must be a Stellar public key ` +
+            `(starts with G, 56 chars, base32).`,
+        }],
+      };
+    }
+
+    if (network !== "mainnet" && network !== "testnet") {
+      return {
+        content: [{ type: "text", text: `Invalid network: ${network}. Use "mainnet" or "testnet".` }],
+      };
+    }
+
+    const { horizonUrl } = getNetworkConfig(network);
+    const url = `${horizonUrl}/accounts/${accountId}`;
+
+    try {
+      const res = await fetch(url, { headers: { Accept: "application/json" } });
+      if (res.status === 404) {
+        return {
+          content: [{
+            type: "text",
+            text:
+              `Account ${accountId} does not exist on ${network}. ` +
+              `It must be funded with at least the base reserve (currently 1 XLM) before it appears on-chain.`,
+          }],
+        };
+      }
+      if (!res.ok) {
+        const body = await res.text();
+        return {
+          content: [{ type: "text", text: `Horizon request failed (${res.status}): ${body.slice(0, 300)}` }],
+        };
+      }
+
+      const data = (await res.json()) as {
+        balances: Array<{
+          balance: string;
+          asset_type: string;
+          asset_code?: string;
+          asset_issuer?: string;
+          limit?: string;
+        }>;
+      };
+
+      let balances = data.balances ?? [];
+      if (filterAssetCode) {
+        balances = balances.filter((b) => {
+          const code = b.asset_type === "native" ? "XLM" : (b.asset_code ?? "").toUpperCase();
+          return code === filterAssetCode;
+        });
+      }
+
+      if (balances.length === 0) {
+        const note = filterAssetCode
+          ? ` No ${filterAssetCode} balance found on this account.`
+          : "";
+        return {
+          content: [{ type: "text", text: `Account ${accountId} on ${network}:${note}` }],
+        };
+      }
+
+      const lines = balances.map((b) => {
+        if (b.asset_type === "native") {
+          return `  • XLM (native): ${b.balance}`;
+        }
+        const code = b.asset_code ?? "?";
+        const issuer = b.asset_issuer ? `${b.asset_issuer.slice(0, 4)}…${b.asset_issuer.slice(-4)}` : "?";
+        const limit = b.limit ? ` / limit ${b.limit}` : "";
+        return `  • ${code} (issuer ${issuer}): ${b.balance}${limit}`;
+      });
+
+      const header =
+        `Balance for ${accountId} on ${network}` +
+        (filterAssetCode ? ` (filter: ${filterAssetCode})` : "") +
+        ":";
+      return {
+        content: [{ type: "text", text: [header, ...lines].join("\n") }],
+      };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return {
+        content: [{ type: "text", text: `Failed to fetch balance from ${horizonUrl}: ${message}` }],
+      };
     }
   }
   if (name === "execute_swap") {
