@@ -442,10 +442,29 @@ const res = await x402Fetch(url, undefined, {
       const client = createDexClient(config, apiKey);
 
       const quote = await client.getQuote(from, to, rawAmount);
-      const result = await client.executeSwap(secretKey, quote);
+
+      // Apply the user's requested slippage to minOut. The API returns its own
+      // default minOut; overriding it here ensures the on-chain minimum output
+      // actually reflects what the caller specified.
+      const userMinOut = String(
+        Math.floor(parseInt(quote.expectedOut, 10) * (1 - slippageBps / 10_000))
+      );
+      const adjustedQuote = {
+        ...quote,
+        minOut: userMinOut,
+        rawData: quote.rawData
+          ? {
+              ...(quote.rawData as Record<string, unknown>),
+              minOut: userMinOut,
+              minimumAmountOut: userMinOut,
+            }
+          : undefined,
+      };
+
+      const result = await client.executeSwap(secretKey, adjustedQuote);
 
       const expectedOutHuman = (parseInt(quote.expectedOut, 10) / 10 ** decimals).toFixed(6);
-      const minOutHuman      = (parseInt(quote.minOut,      10) / 10 ** decimals).toFixed(6);
+      const minOutHuman      = (parseInt(userMinOut,        10) / 10 ** decimals).toFixed(6);
 
       const text = [
         `✅ Swap executed successfully!`,
