@@ -13,12 +13,13 @@
     "onboarding"
   ],
   "scripts": {
-    "build": "npm run build:root && npm run build:agent-kit && npm run build:x402 && npm run build --workspaces --if-present",
+    "build": "npm run build:root && npm run build:agent-kit && npm run build:x402 && npm run build:mcp && npm run build:create-app",
     "build:root": "tsc",
     "build:agent-kit": "npm run build -w packages/stellar-agent-kit",
     "build:x402": "npm run build -w packages/x402-stellar-sdk",
     "build:create-app": "npm run build -w packages/create-stellar-devkit-app",
     "build:mcp": "npm run build -w packages/stellar-devkit-mcp",
+    "test:sdk": "npm run build:agent-kit && node scripts/test-sdk.mjs",
     "typecheck": "tsc --noEmit && npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "dev:sdk-fe": "npm run dev -w sdk-fe --if-present",
