@@ -1,26 +1,28 @@
 // src/agent.ts
-import { Keypair as Keypair3, Asset, TransactionBuilder as TransactionBuilder4, Operation, Networks as Networks4, Horizon as Horizon2 } from "@stellar/stellar-sdk";
+import { Keypair as Keypair3, Asset, TransactionBuilder as TransactionBuilder4, Operation, Networks as Networks4, Server as HorizonServer2 } from "@stellar/stellar-sdk";
 
 // src/config/networks.ts
 import { z } from "zod";
 var NetworkConfigSchema = z.object({
+  network: z.enum(["mainnet", "testnet"]),
   horizonUrl: z.string().url(),
   sorobanRpcUrl: z.string().url(),
   friendbotUrl: z.string().url().optional()
 });
 var mainnet = {
+  network: "mainnet",
   horizonUrl: "https://horizon.stellar.org",
   sorobanRpcUrl: "https://soroban-rpc.mainnet.stellar.gateway.fm"
 };
 var testnet = {
+  network: "testnet",
   horizonUrl: "https://horizon-testnet.stellar.org",
   sorobanRpcUrl: "https://soroban-testnet.stellar.org",
   friendbotUrl: "https://friendbot.stellar.org"
 };
 var networks = { mainnet, testnet };
-function getNetworkConfig(name) {
-  const key = (name ?? "mainnet").toLowerCase();
-  if (key === "testnet") return testnet;
+function getNetworkConfig(name = "mainnet") {
+  if (name === "testnet") return testnet;
   return mainnet;
 }
 
@@ -46,7 +48,7 @@ function parseApiQuote(data) {
 function createSoroSwapDexClient(networkConfig, apiKey) {
   const key = apiKey ?? process.env.SOROSWAP_API_KEY;
   async function getQuote(from, to, amount) {
-    const url = `${SOROSWAP_API_BASE}/quote?network=mainnet`;
+    const url = `${SOROSWAP_API_BASE}/quote?network=${networkConfig.horizonUrl.includes("testnet") ? "testnet" : "mainnet"}`;
     const body = {
       assetIn: assetToApiString(from),
       assetOut: assetToApiString(to),
@@ -67,7 +69,7 @@ function createSoroSwapDexClient(networkConfig, apiKey) {
     if (!key) throw new Error("executeSwap requires SOROSWAP_API_KEY");
     const keypair = Keypair.fromSecret(secretKey.trim());
     const fromAddress = keypair.publicKey();
-    const buildUrl = `${SOROSWAP_API_BASE}/quote/build?network=mainnet`;
+    const buildUrl = `${SOROSWAP_API_BASE}/quote/build?network=${networkConfig.horizonUrl.includes("testnet") ? "testnet" : "mainnet"}`;
     const buildRes = await fetch(buildUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
@@ -77,8 +79,8 @@ function createSoroSwapDexClient(networkConfig, apiKey) {
     const buildData = await buildRes.json();
     const xdrBase64 = buildData?.xdr;
     if (!xdrBase64 || typeof xdrBase64 !== "string") throw new Error("SoroSwap build response missing xdr");
-    const config = getNetworkConfig("mainnet");
-    const networkPassphrase = Networks.PUBLIC;
+    const config = getNetworkConfig(networkConfig.horizonUrl.includes("testnet") ? "testnet" : "mainnet");
+    const networkPassphrase = networkConfig.horizonUrl.includes("testnet") ? Networks.TESTNET : Networks.PUBLIC;
     const tx = TransactionBuilder.fromXDR(xdrBase64, networkPassphrase);
     tx.sign(keypair);
     const server = new rpc.Server(config.sorobanRpcUrl, { allowHttp: config.sorobanRpcUrl.startsWith("http:") });
@@ -230,7 +232,7 @@ import {
   Networks as Networks3,
   xdr as xdr2,
   rpc as rpc3,
-  Horizon
+  Server as HorizonServer
 } from "@stellar/stellar-sdk";
 import { PoolContractV2, RequestType } from "@blend-capital/blend-sdk";
 var BLEND_POOLS_MAINNET = "CCCCIQSDILITHMM7PBSLVDT5MISSY7R26MNZXCX4H7J5JQ5FPIYOGYFS";
@@ -246,8 +248,8 @@ async function buildSubmitTx(networkConfig, secretKey, poolId, requests) {
     requests
   });
   const op = xdr2.Operation.fromXDR(submitOpXdr, "base64");
-  const networkPassphrase = Networks3.PUBLIC;
-  const horizon = new Horizon.Server(networkConfig.horizonUrl);
+  const networkPassphrase = networkConfig.network === "testnet" ? Networks3.TESTNET : Networks3.PUBLIC;
+  const horizon = new HorizonServer(networkConfig.horizonUrl);
   const sourceAccount = await horizon.loadAccount(user);
   const tx = new TransactionBuilder3(sourceAccount, {
     fee: "10000",
@@ -307,6 +309,58 @@ async function lendingBorrow(networkConfig, secretKey, args) {
   }
   return { hash: sendResult.hash, status: sendResult.status ?? "PENDING" };
 }
+async function lendingWithdraw(networkConfig, secretKey, args) {
+  const amountBigInt = BigInt(args.amount);
+  const requests = [
+    {
+      request_type: RequestType.WithdrawCollateral,
+      address: args.assetContractId,
+      amount: amountBigInt
+    }
+  ];
+  const { tx, keypair } = await buildSubmitTx(
+    networkConfig,
+    secretKey,
+    args.poolId,
+    requests
+  );
+  const server = new rpc3.Server(networkConfig.sorobanRpcUrl, {
+    allowHttp: networkConfig.sorobanRpcUrl.startsWith("http:")
+  });
+  const prepared = await server.prepareTransaction(tx);
+  prepared.sign(keypair);
+  const sendResult = await server.sendTransaction(prepared);
+  if (sendResult.errorResult) {
+    throw new Error(`Blend withdraw failed: ${String(sendResult.errorResult)}`);
+  }
+  return { hash: sendResult.hash, status: sendResult.status ?? "PENDING" };
+}
+async function lendingRepay(networkConfig, secretKey, args) {
+  const amountBigInt = BigInt(args.amount);
+  const requests = [
+    {
+      request_type: RequestType.Repay,
+      address: args.assetContractId,
+      amount: amountBigInt
+    }
+  ];
+  const { tx, keypair } = await buildSubmitTx(
+    networkConfig,
+    secretKey,
+    args.poolId,
+    requests
+  );
+  const server = new rpc3.Server(networkConfig.sorobanRpcUrl, {
+    allowHttp: networkConfig.sorobanRpcUrl.startsWith("http:")
+  });
+  const prepared = await server.prepareTransaction(tx);
+  prepared.sign(keypair);
+  const sendResult = await server.sendTransaction(prepared);
+  if (sendResult.errorResult) {
+    throw new Error(`Blend repay failed: ${String(sendResult.errorResult)}`);
+  }
+  return { hash: sendResult.hash, status: sendResult.status ?? "PENDING" };
+}
 
 // src/agent.ts
 var StellarAgentKit = class {
@@ -318,19 +372,16 @@ var StellarAgentKit = class {
   _horizon = null;
   _oracle = null;
   constructor(secretKey, network = "mainnet") {
-    if (network !== "mainnet") {
-      throw new Error("This project is mainnet-only. Use network: 'mainnet'.");
-    }
     this.keypair = Keypair3.fromSecret(secretKey.trim());
-    this.network = "mainnet";
-    this.config = getNetworkConfig();
+    this.network = network;
+    this.config = getNetworkConfig(network);
   }
   /**
    * Initialize clients (Horizon, Soroban RPC, protocol wrappers).
    * Call after construction before using protocol methods.
    */
   async initialize() {
-    this._horizon = new Horizon2.Server(this.config.horizonUrl);
+    this._horizon = new HorizonServer2(this.config.horizonUrl);
     this._dex = createDexClient(this.config, process.env.SOROSWAP_API_KEY);
     this._oracle = createReflectorOracle({ networkConfig: this.config });
     this._initialized = true;
@@ -374,7 +425,8 @@ var StellarAgentKit = class {
     if (!this._horizon) throw new Error("Horizon not initialized");
     const id = accountId ?? this.keypair.publicKey();
     const account = await this._horizon.loadAccount(id);
-    return account.balances.map((b) => ({
+    const balances = account.balances;
+    return balances.map((b) => ({
       assetCode: b.asset_code === "native" ? "XLM" : b.asset_code,
       issuer: b.asset_issuer,
       balance: b.balance,
@@ -390,7 +442,7 @@ var StellarAgentKit = class {
   async createAccount(destination, startingBalance) {
     this.ensureInitialized();
     if (!this._horizon) throw new Error("Horizon not initialized");
-    const networkPassphrase = Networks4.PUBLIC;
+    const networkPassphrase = this.network === "testnet" ? Networks4.TESTNET : Networks4.PUBLIC;
     const sourceAccount = await this._horizon.loadAccount(this.keypair.publicKey());
     const tx = new TransactionBuilder4(sourceAccount, {
       fee: "100",
@@ -411,7 +463,7 @@ var StellarAgentKit = class {
   async sendPayment(to, amount, assetCode, assetIssuer) {
     this.ensureInitialized();
     if (!this._horizon) throw new Error("Horizon not initialized");
-    const networkPassphrase = Networks4.PUBLIC;
+    const networkPassphrase = this.network === "testnet" ? Networks4.TESTNET : Networks4.PUBLIC;
     const sourceAccount = await this._horizon.loadAccount(this.keypair.publicKey());
     const asset = assetCode && assetIssuer ? new Asset(assetCode, assetIssuer) : Asset.native();
     const tx = new TransactionBuilder4(sourceAccount, {
@@ -434,12 +486,12 @@ var StellarAgentKit = class {
   async pathPayment(sendAsset, sendMax, destination, destAsset, destAmount, path = []) {
     this.ensureInitialized();
     if (!this._horizon) throw new Error("Horizon not initialized");
-    const send = sendAsset.assetCode === "XLM" && !sendAsset.issuer ? Asset.native() : new Asset(sendAsset.assetCode, sendAsset.issuer);
-    const dest = destAsset.assetCode === "XLM" && !destAsset.issuer ? Asset.native() : new Asset(destAsset.assetCode, destAsset.issuer);
+    const send = sendAsset.assetCode === "XLM" && !sendAsset.issuer ? Asset.native() : new Asset(sendAsset.assetCode, sendAsset.issuer || "");
+    const dest = destAsset.assetCode === "XLM" && !destAsset.issuer ? Asset.native() : new Asset(destAsset.assetCode, destAsset.issuer || "");
     const pathAssets = path.map(
-      (p) => p.assetCode === "XLM" && !p.issuer ? Asset.native() : new Asset(p.assetCode, p.issuer)
+      (p) => p.assetCode === "XLM" && !p.issuer ? Asset.native() : new Asset(p.assetCode, p.issuer || "")
     );
-    const networkPassphrase = Networks4.PUBLIC;
+    const networkPassphrase = this.network === "testnet" ? Networks4.TESTNET : Networks4.PUBLIC;
     const sourceAccount = await this._horizon.loadAccount(this.keypair.publicKey());
     const tx = new TransactionBuilder4(sourceAccount, {
       fee: "100",
@@ -457,6 +509,39 @@ var StellarAgentKit = class {
     tx.sign(this.keypair);
     const result = await this._horizon.submitTransaction(tx);
     return { hash: result.hash };
+  }
+  // ─── Trustlines ────────────────────────────────────────────────────────────
+  /**
+   * Create or modify a trustline for a custom asset.
+   * Required before an account can hold or receive non-native assets.
+   * @param assetCode - Asset code (e.g. "USDC")
+   * @param assetIssuer - Issuer account (G...)
+   * @param limit - Optional maximum balance to trust; defaults to max ("922337203685.4775807")
+   * @returns Transaction hash
+   */
+  async createTrustline(assetCode, assetIssuer, limit) {
+    this.ensureInitialized();
+    if (!this._horizon) throw new Error("Horizon not initialized");
+    const networkPassphrase = this.network === "testnet" ? Networks4.TESTNET : Networks4.PUBLIC;
+    const asset = new Asset(assetCode, assetIssuer);
+    const sourceAccount = await this._horizon.loadAccount(this.keypair.publicKey());
+    const tx = new TransactionBuilder4(sourceAccount, {
+      fee: "100",
+      networkPassphrase
+    }).addOperation(Operation.changeTrust({ asset, ...limit !== void 0 && { limit } })).setTimeout(180).build();
+    tx.sign(this.keypair);
+    const result = await this._horizon.submitTransaction(tx);
+    return { hash: result.hash };
+  }
+  /**
+   * Remove a trustline for a custom asset (sets limit to "0").
+   * The account's balance for that asset must be zero before removal.
+   * @param assetCode - Asset code (e.g. "USDC")
+   * @param assetIssuer - Issuer account (G...)
+   * @returns Transaction hash
+   */
+  async removeTrustline(assetCode, assetIssuer) {
+    return this.createTrustline(assetCode, assetIssuer, "0");
   }
   // ─── Oracle (Reflector SEP-40) ─────────────────────────────────────────────
   /**
@@ -483,6 +568,20 @@ var StellarAgentKit = class {
     this.ensureInitialized();
     return lendingBorrow(this.config, this.keypair.secret(), args);
   }
+  /**
+   * Withdraw collateral from a Blend pool.
+   */
+  async lendingWithdraw(args) {
+    this.ensureInitialized();
+    return lendingWithdraw(this.config, this.keypair.secret(), args);
+  }
+  /**
+   * Repay a borrowed asset to a Blend pool.
+   */
+  async lendingRepay(args) {
+    this.ensureInitialized();
+    return lendingRepay(this.config, this.keypair.secret(), args);
+  }
 };
 
 // src/config/assets.ts
@@ -507,6 +606,63 @@ var FXDAO_MAINNET = {
   oracle: "CB5OTV4GV24T5USEZHFVYGC3F4A4MPUQ3LN56E76UK2IT7MJ6QXW4TFS"
 };
 var ALLBRIDGE_CORE_STELLAR_DOCS = "https://docs-core.allbridge.io/sdk/guides/stellar";
+
+// src/config/env.ts
+import { z as z2 } from "zod";
+var stellarSecretKeyRegex = /^S[A-Z2-7]{55}$/;
+var stellarPublicKeyRegex = /^G[A-Z2-7]{55}$/;
+var StellarEnvSchema = z2.object({
+  SECRET_KEY: z2.string({ required_error: "SECRET_KEY is required" }).regex(
+    stellarSecretKeyRegex,
+    "SECRET_KEY must be a valid Stellar secret key starting with S (56 chars)"
+  )
+});
+var X402EnvSchema = z2.object({
+  X402_DESTINATION: z2.string({ required_error: "X402_DESTINATION is required" }).regex(
+    stellarPublicKeyRegex,
+    "X402_DESTINATION must be a valid Stellar public key starting with G (56 chars)"
+  )
+});
+var SoroSwapEnvSchema = z2.object({
+  SOROSWAP_API_KEY: z2.string({ required_error: "SOROSWAP_API_KEY is required" }).min(1, "SOROSWAP_API_KEY cannot be empty")
+});
+var McpEnvSchema = z2.object({
+  SECRET_KEY: z2.string({ required_error: "SECRET_KEY is required for execute_swap" }).regex(
+    stellarSecretKeyRegex,
+    "SECRET_KEY must be a valid Stellar secret key starting with S (56 chars)"
+  ),
+  SOROSWAP_API_KEY: z2.string({ required_error: "SOROSWAP_API_KEY is required" }).min(1, "SOROSWAP_API_KEY cannot be empty")
+});
+function validateStellarEnv(env = process.env) {
+  const result = StellarEnvSchema.safeParse(env);
+  if (!result.success) {
+    const messages = result.error.errors.map((e) => `  - ${e.path.join(".")}: ${e.message}`).join("\n");
+    throw new Error(
+      `StellarAgentKit startup failed \u2014 missing or invalid env vars:
+${messages}`
+    );
+  }
+  return result.data;
+}
+function validateX402Env(env = process.env) {
+  const result = X402EnvSchema.safeParse(env);
+  if (!result.success) {
+    const messages = result.error.errors.map((e) => `  - ${e.path.join(".")}: ${e.message}`).join("\n");
+    throw new Error(
+      `x402-stellar-sdk startup failed \u2014 missing or invalid env vars:
+${messages}`
+    );
+  }
+  return result.data;
+}
+function validateMcpEnv(env = process.env) {
+  const result = McpEnvSchema.safeParse(env);
+  if (!result.success) {
+    const messages = result.error.errors.map((e) => `${e.path.join(".")}: ${e.message}`).join("; ");
+    return { success: false, error: messages };
+  }
+  return { success: true, data: result.data };
+}
 export {
   ALLBRIDGE_CORE_STELLAR_DOCS,
   BAND_ORACLE,
@@ -514,15 +670,24 @@ export {
   BLEND_POOLS_MAINNET,
   FXDAO_MAINNET,
   MAINNET_ASSETS,
+  McpEnvSchema,
   REFLECTOR_ORACLE,
   SOROSWAP_AGGREGATOR,
+  SoroSwapEnvSchema,
   StellarAgentKit,
+  StellarEnvSchema,
   TESTNET_ASSETS,
+  X402EnvSchema,
   createDexClient,
   createReflectorOracle,
   getNetworkConfig,
   lendingBorrow,
+  lendingRepay,
   lendingSupply,
-  networks
+  lendingWithdraw,
+  networks,
+  validateMcpEnv,
+  validateStellarEnv,
+  validateX402Env
 };
 //# sourceMappingURL=index.js.map

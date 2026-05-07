@@ -1,0 +1,14 @@
+/node_modules
+/dist
+/build
+/out
+/public
+/src
+/styles
+/test
+/types
+/utils
+/webpack.config.js
+/webpack.config.js.map
+/webpack.config.js.map.gz
+/webpack.config.js.map.gz.map

@@ -53,7 +53,7 @@ export function Navbar() {
             <ArrowLeft className="h-3.5 w-3.5" />
             Back to Home
           </a>
-          <nav className="flex items-center gap-1 min-w-0 shrink" aria-label="Onboarding">
+          <nav className="flex items-center gap-1 min-w-0 shrink" aria-label="neos">
             {NAV_LINKS.map(({ href, label }) => {
               const isActive = pathname === "/" && href === "/#paths";
               const className = `px-3 py-2.5 text-sm rounded-lg transition-colors duration-300 whitespace-nowrap ${
