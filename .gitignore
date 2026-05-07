@@ -12,3 +12,5 @@
 /webpack.config.js.map
 /webpack.config.js.map.gz
 /webpack.config.js.map.gz.map
+.vercel
+.env*.local

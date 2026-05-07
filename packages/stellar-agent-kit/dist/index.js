@@ -1,5 +1,5 @@
 // src/agent.ts
-import { Keypair as Keypair3, Asset, TransactionBuilder as TransactionBuilder4, Operation, Networks as Networks4, Server as HorizonServer2 } from "@stellar/stellar-sdk";
+import { Keypair as Keypair3, Asset, TransactionBuilder as TransactionBuilder4, Operation, Networks as Networks4, Horizon as Horizon2 } from "@stellar/stellar-sdk";
 
 // src/config/networks.ts
 import { z } from "zod";
@@ -232,7 +232,7 @@ import {
   Networks as Networks3,
   xdr as xdr2,
   rpc as rpc3,
-  Server as HorizonServer
+  Horizon
 } from "@stellar/stellar-sdk";
 import { PoolContractV2, RequestType } from "@blend-capital/blend-sdk";
 var BLEND_POOLS_MAINNET = "CCCCIQSDILITHMM7PBSLVDT5MISSY7R26MNZXCX4H7J5JQ5FPIYOGYFS";
@@ -249,7 +249,7 @@ async function buildSubmitTx(networkConfig, secretKey, poolId, requests) {
   });
   const op = xdr2.Operation.fromXDR(submitOpXdr, "base64");
   const networkPassphrase = networkConfig.network === "testnet" ? Networks3.TESTNET : Networks3.PUBLIC;
-  const horizon = new HorizonServer(networkConfig.horizonUrl);
+  const horizon = new Horizon.Server(networkConfig.horizonUrl);
   const sourceAccount = await horizon.loadAccount(user);
   const tx = new TransactionBuilder3(sourceAccount, {
     fee: "10000",
@@ -381,7 +381,7 @@ var StellarAgentKit = class {
    * Call after construction before using protocol methods.
    */
   async initialize() {
-    this._horizon = new HorizonServer2(this.config.horizonUrl);
+    this._horizon = new Horizon2.Server(this.config.horizonUrl);
     this._dex = createDexClient(this.config, process.env.SOROSWAP_API_KEY);
     this._oracle = createReflectorOracle({ networkConfig: this.config });
     this._initialized = true;

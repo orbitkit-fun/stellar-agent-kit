@@ -10,7 +10,7 @@ import {
   Networks,
   xdr,
   rpc,
-  Server as HorizonServer,
+  Horizon,
 } from "@stellar/stellar-sdk";
 import { PoolContractV2, RequestType, type Request } from "@blend-capital/blend-sdk";
 import type { NetworkConfig } from "../config/networks.js";
@@ -73,7 +73,7 @@ async function buildSubmitTx(
     networkConfig.network === "testnet"
       ? Networks.TESTNET
       : Networks.PUBLIC;
-  const horizon = new HorizonServer(networkConfig.horizonUrl);
+  const horizon = new Horizon.Server(networkConfig.horizonUrl);
   const sourceAccount = await horizon.loadAccount(user);
   const tx = new TransactionBuilder(sourceAccount, {
     fee: "10000",

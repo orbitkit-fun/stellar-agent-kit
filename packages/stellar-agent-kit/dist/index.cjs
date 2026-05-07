@@ -285,7 +285,7 @@ async function buildSubmitTx(networkConfig, secretKey, poolId, requests) {
   });
   const op = import_stellar_sdk4.xdr.Operation.fromXDR(submitOpXdr, "base64");
   const networkPassphrase = networkConfig.network === "testnet" ? import_stellar_sdk4.Networks.TESTNET : import_stellar_sdk4.Networks.PUBLIC;
-  const horizon = new import_stellar_sdk4.Server(networkConfig.horizonUrl);
+  const horizon = new import_stellar_sdk4.Horizon.Server(networkConfig.horizonUrl);
   const sourceAccount = await horizon.loadAccount(user);
   const tx = new import_stellar_sdk4.TransactionBuilder(sourceAccount, {
     fee: "10000",
@@ -417,7 +417,7 @@ var StellarAgentKit = class {
    * Call after construction before using protocol methods.
    */
   async initialize() {
-    this._horizon = new import_stellar_sdk5.Server(this.config.horizonUrl);
+    this._horizon = new import_stellar_sdk5.Horizon.Server(this.config.horizonUrl);
     this._dex = createDexClient(this.config, process.env.SOROSWAP_API_KEY);
     this._oracle = createReflectorOracle({ networkConfig: this.config });
     this._initialized = true;

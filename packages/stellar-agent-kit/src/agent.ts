@@ -3,7 +3,7 @@
  * Constructor(secretKey, network) + initialize() then protocol methods.
  */
 
-import { Keypair, Asset, TransactionBuilder, Operation, Networks, Server as HorizonServer } from "@stellar/stellar-sdk";
+import { Keypair, Asset, TransactionBuilder, Operation, Networks, Horizon } from "@stellar/stellar-sdk";
 import { getNetworkConfig, type NetworkConfig } from "./config/networks.js";
 import { createDexClient, type DexAsset, type QuoteResult, type SwapResult } from "./dex/index.js";
 import { createReflectorOracle, type OracleAsset, type PriceData } from "./oracle/index.js";
@@ -18,7 +18,7 @@ export class StellarAgentKit {
   public readonly config: NetworkConfig;
   private _initialized = false;
   private _dex: ReturnType<typeof createDexClient> | null = null;
-  private _horizon: HorizonServer | null = null;
+  private _horizon: InstanceType<typeof Horizon.Server> | null = null;
   private _oracle: ReturnType<typeof createReflectorOracle> | null = null;
 
   constructor(secretKey: string, network: StellarNetwork = "mainnet") {
@@ -32,7 +32,7 @@ export class StellarAgentKit {
    * Call after construction before using protocol methods.
    */
   async initialize(): Promise<this> {
-    this._horizon = new HorizonServer(this.config.horizonUrl);
+    this._horizon = new Horizon.Server(this.config.horizonUrl);
     this._dex = createDexClient(this.config, process.env.SOROSWAP_API_KEY);
     this._oracle = createReflectorOracle({ networkConfig: this.config });
     this._initialized = true;
